@@ -1,0 +1,9 @@
+﻿namespace DealTrack.Domain.Enums
+{
+    public enum UserRole
+    {
+        Admin = 1,
+        TeamLead = 2,
+        Sales = 3
+    }
+}

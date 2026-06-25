@@ -1,0 +1,6 @@
+@DealTrack.API_HostAddress = http://localhost:5136
+
+GET {{DealTrack.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
