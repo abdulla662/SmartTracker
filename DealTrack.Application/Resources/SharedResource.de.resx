@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="xml:space" msdata:Ordinal="3" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+
+  <!-- Auth -->
+  <data name="EmailAlreadyExists" xml:space="preserve"><value>E-Mail existiert bereits</value></data>
+  <data name="InvalidSubscriptionPlan" xml:space="preserve"><value>Ungültiger Abonnementplan</value></data>
+  <data name="CompanyNameRequired" xml:space="preserve"><value>Firmenname ist erforderlich</value></data>
+  <data name="RegisterSuccess" xml:space="preserve"><value>Benutzer erfolgreich registriert</value></data>
+  <data name="InvalidCredentials" xml:space="preserve"><value>Ungültige E-Mail oder Passwort</value></data>
+  <data name="LoginSuccess" xml:space="preserve"><value>Anmeldung erfolgreich</value></data>
+
+  <!-- Clients -->
+  <data name="ClientPhoneExists" xml:space="preserve"><value>Ein Kunde mit dieser Telefonnummer existiert bereits</value></data>
+  <data name="ClientNotFound" xml:space="preserve"><value>Kunde nicht gefunden</value></data>
+  <data name="AccessDenied" xml:space="preserve"><value>Zugriff verweigert</value></data>
+  <data name="ClientCreated" xml:space="preserve"><value>Kunde erfolgreich erstellt</value></data>
+  <data name="ClientUpdated" xml:space="preserve"><value>Kunde erfolgreich aktualisiert</value></data>
+  <data name="ClientDeleted" xml:space="preserve"><value>Kunde erfolgreich gelöscht</value></data>
+
+  <!-- FollowUps -->
+  <data name="FollowUpCreated" xml:space="preserve"><value>Nachverfolgung erfolgreich erstellt</value></data>
+  <data name="FollowUpNotFound" xml:space="preserve"><value>Nachverfolgung nicht gefunden</value></data>
+  <data name="FollowUpMarkedDone" xml:space="preserve"><value>Als erledigt markiert</value></data>
+  <data name="FollowUpMarkedMissed" xml:space="preserve"><value>Als verpasst markiert</value></data>
+  <data name="FollowUpDeleted" xml:space="preserve"><value>Nachverfolgung erfolgreich gelöscht</value></data>
+
+  <!-- Payments -->
+  <data name="PaymentRecorded" xml:space="preserve"><value>Zahlung erfolgreich erfasst</value></data>
+  <data name="PaymentNotFound" xml:space="preserve"><value>Zahlung nicht gefunden</value></data>
+  <data name="PaymentDeleted" xml:space="preserve"><value>Zahlung erfolgreich gelöscht</value></data>
+</root>
