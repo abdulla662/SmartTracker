@@ -68,5 +68,18 @@ namespace DealTrack.Application.Services
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
         }
+
+        public async Task<ApiResponse> UpdatePaymentAsync(Guid id, UpdatePaymentDto dto, CancellationToken ct)
+        {
+            var payment = await _uow.Read<Payment>().GetByIdAsync(id, ct);
+            if (payment is null)
+                return ApiResponse.FailureResponse(_localizer["PaymentNotFound"], HttpStatusCode.NotFound);
+
+            payment.UpdateAmount(dto.Amount);
+            await _uow.Write<Payment>().UpdateAsync(payment, ct);
+            await _uow.SaveChangesAsync();
+
+            return ApiResponse.SuccessResponse(message: _localizer["PaymentUpdated"]);
+        }
     }
 }

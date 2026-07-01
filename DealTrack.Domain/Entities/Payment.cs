@@ -20,5 +20,10 @@ namespace DealTrack.Domain.Entities
             Amount = amount;
             PaymentDate = DateTime.UtcNow;
         }
+        public void UpdateAmount(decimal amount)
+        {
+            Amount = amount;
+            MarkUpdated();
+        }
     }
 }

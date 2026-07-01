@@ -37,5 +37,10 @@ namespace DealTrack.API.Controllers
         {
             return await _paymentService.DeletePaymentAsync(id, ct);
         }
+        [HttpPut("{id:guid}")]
+        public async Task<ApiResponse> UpdatePayment(Guid id, [FromBody] UpdatePaymentDto dto, CancellationToken ct)
+        {
+            return await _paymentService.UpdatePaymentAsync(id, dto, ct);
+        }
     }
 }

@@ -49,5 +49,12 @@ namespace DealTrack.API.Controllers
         {
             return await _followUpService.DeleteFollowUpAsync(id, ct);
         }
+
+        [HttpPut("{id:guid}")]
+        public async Task<ApiResponse> UpdateFollowUp(Guid id, [FromBody] UpdateFollowUpDto dto, CancellationToken ct)
+        {
+            return await _followUpService.UpdateFollowUpAsync(id, dto, ct);
+        }
+
     }
 }

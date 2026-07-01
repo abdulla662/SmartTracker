@@ -94,5 +94,16 @@ namespace DealTrack.Application.Services
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpDeleted"]);
         }
+
+        public async Task<ApiResponse> UpdateFollowUpAsync(Guid id, UpdateFollowUpDto dto, CancellationToken ct)
+        {
+            var followUp = await _uow.Read<FollowUp>().GetByIdAsync(id, ct);
+            if (followUp is null)
+                return ApiResponse.FailureResponse(_localizer["FollowUpNotFound"], HttpStatusCode.NotFound);
+            followUp.UpdateNotes(dto.Notes);
+            await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
+            await _uow.SaveChangesAsync();
+            return ApiResponse.SuccessResponse(message: _localizer["FollowUpUpdated"]);
+        }
     }
 }

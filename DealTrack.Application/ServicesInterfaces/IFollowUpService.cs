@@ -10,5 +10,7 @@ namespace DealTrack.Application.ServicesInterfaces
         Task<ApiResponse> MarkDoneAsync(Guid id, CancellationToken ct = default);
         Task<ApiResponse> MarkMissedAsync(Guid id, CancellationToken ct = default);
         Task<ApiResponse> DeleteFollowUpAsync(Guid id, CancellationToken ct = default);
+        Task<ApiResponse> UpdateFollowUpAsync(Guid id, UpdateFollowUpDto dto, CancellationToken ct)
+
     }
 }
