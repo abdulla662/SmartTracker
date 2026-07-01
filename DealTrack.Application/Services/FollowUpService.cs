@@ -1,3 +1,4 @@
+using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.FollowUps;
 using DealTrack.Application.Interfaces;
@@ -14,52 +15,46 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IMapper _mapper;
 
-        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
+        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
+            _mapper = mapper;
         }
 
-        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetFollowUpsForClientAsync(
-            Guid clientId, CancellationToken ct = default)
+        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetFollowUpsForClientAsync(Guid clientId, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
             if (client is null)
-                return ApiResponseT<List<FollowUpResponseDto>>.FailureResponse(
-                    _localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<List<FollowUpResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             var followUps = await _uow.Read<FollowUp>().ListAsync(f => f.ClientId == clientId, ct);
 
             var dtos = followUps
                 .OrderBy(f => f.FollowUpDate)
-                .Select(f => MapToDto(f, client.Name))
+                .Select(f => { var dto = _mapper.Map<FollowUpResponseDto>(f); dto.ClientName = client.Name; return dto; })
                 .ToList();
 
             return ApiResponseT<List<FollowUpResponseDto>>.SuccessResponse(dtos);
         }
 
-        public async Task<ApiResponseT<FollowUpResponseDto>> CreateFollowUpAsync(
-            CreateFollowUpDto dto, CancellationToken ct = default)
+        public async Task<ApiResponseT<FollowUpResponseDto>> CreateFollowUpAsync(CreateFollowUpDto dto, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(dto.ClientId, ct);
             if (client is null)
-                return ApiResponseT<FollowUpResponseDto>.FailureResponse(
-                    _localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<FollowUpResponseDto>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
-            var followUp = new FollowUp(
-                _currentUser.TenantId,
-                dto.ClientId,
-                dto.FollowUpDate,
-                Guid.Parse(_currentUser.UserId),
-                dto.Notes);
-
+            var followUp = new FollowUp(_currentUser.TenantId, dto.ClientId, dto.FollowUpDate, Guid.Parse(_currentUser.UserId), dto.Notes);
             await _uow.Write<FollowUp>().AddAsync(followUp, ct);
             await _uow.SaveChangesAsync();
 
-            return ApiResponseT<FollowUpResponseDto>.SuccessResponse(
-                MapToDto(followUp, client.Name), _localizer["FollowUpCreated"], HttpStatusCode.Created);
+            var result = _mapper.Map<FollowUpResponseDto>(followUp);
+            result.ClientName = client.Name;
+
+            return ApiResponseT<FollowUpResponseDto>.SuccessResponse(result, _localizer["FollowUpCreated"], HttpStatusCode.Created);
         }
 
         public async Task<ApiResponse> MarkDoneAsync(Guid id, CancellationToken ct = default)
@@ -99,17 +94,5 @@ namespace DealTrack.Application.Services
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpDeleted"]);
         }
-
-        private static FollowUpResponseDto MapToDto(FollowUp f, string clientName) => new()
-        {
-            Id = f.Id,
-            ClientId = f.ClientId,
-            ClientName = clientName,
-            FollowUpDate = f.FollowUpDate,
-            Status = f.Status,
-            Notes = f.Notes,
-            CreatedByUserId = f.CreatedByUserId,
-            CreatedAt = f.CreatedAt
-        };
     }
 }

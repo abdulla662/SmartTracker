@@ -1,3 +1,4 @@
+using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
@@ -15,16 +16,17 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IMapper _mapper;
 
-        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
+        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
+            _mapper = mapper;
         }
 
-        public async Task<ApiResponseT<PagedResult<ClientResponseDto>>> GetClientsAsync(
-            ClientFilterDto filter, CancellationToken ct = default)
+        public async Task<ApiResponseT<PagedResult<ClientResponseDto>>> GetClientsAsync(ClientFilterDto filter, CancellationToken ct = default)
         {
             var userId = _currentUser.UserId;
             var isAdmin = _currentUser.Role == UserRole.Admin;
@@ -33,15 +35,14 @@ namespace DealTrack.Application.Services
                 (isAdmin || c.AssignedToUserId == userId) &&
                 (string.IsNullOrEmpty(filter.Search) ||
                  c.Name.Contains(filter.Search) ||
-                 c.Phone.Contains(filter.Search)),
-                ct);
+                 c.Phone.Contains(filter.Search)), ct);
 
             var totalCount = all.Count;
             var items = all
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((filter.Page - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .Select(MapToDto)
+                .Select(c => _mapper.Map<ClientResponseDto>(c))
                 .ToList();
 
             return ApiResponseT<PagedResult<ClientResponseDto>>.SuccessResponse(new PagedResult<ClientResponseDto>
@@ -53,43 +54,35 @@ namespace DealTrack.Application.Services
             });
         }
 
-        public async Task<ApiResponseT<ClientResponseDto>> GetClientByIdAsync(
-            Guid id, CancellationToken ct = default)
+        public async Task<ApiResponseT<ClientResponseDto>> GetClientByIdAsync(Guid id, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(id, ct);
             if (client is null)
-                return ApiResponseT<ClientResponseDto>.FailureResponse(
-                    _localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<ClientResponseDto>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             if (!CanAccess(client))
-                return ApiResponseT<ClientResponseDto>.FailureResponse(
-                    _localizer["AccessDenied"], HttpStatusCode.Forbidden);
+                return ApiResponseT<ClientResponseDto>.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
 
-            return ApiResponseT<ClientResponseDto>.SuccessResponse(MapToDto(client));
+            return ApiResponseT<ClientResponseDto>.SuccessResponse(_mapper.Map<ClientResponseDto>(client));
         }
 
-        public async Task<ApiResponseT<ClientResponseDto>> CreateClientAsync(
-            CreateClientDto dto, CancellationToken ct = default)
+        public async Task<ApiResponseT<ClientResponseDto>> CreateClientAsync(CreateClientDto dto, CancellationToken ct = default)
         {
-            var tenantId = _currentUser.TenantId;
             var userId = _currentUser.UserId;
 
-            var phoneExists = await _uow.Read<Client>().AnyAsync(
-                c => c.Phone == dto.Phone && c.AssignedToUserId == userId, ct);
-
+            var phoneExists = await _uow.Read<Client>().AnyAsync(c => c.Phone == dto.Phone && c.AssignedToUserId == userId, ct);
             if (phoneExists)
                 return ApiResponseT<ClientResponseDto>.FailureResponse(_localizer["ClientPhoneExists"]);
 
-            var client = new Client(tenantId, dto.Name, dto.Phone, dto.Notes, userId);
+            var client = new Client(_currentUser.TenantId, dto.Name, dto.Phone, dto.Notes, userId);
             await _uow.Write<Client>().AddAsync(client, ct);
             await _uow.SaveChangesAsync();
 
             return ApiResponseT<ClientResponseDto>.SuccessResponse(
-                MapToDto(client), _localizer["ClientCreated"], HttpStatusCode.Created);
+                _mapper.Map<ClientResponseDto>(client), _localizer["ClientCreated"], HttpStatusCode.Created);
         }
 
-        public async Task<ApiResponse> UpdateClientAsync(
-            Guid id, UpdateClientDto dto, CancellationToken ct = default)
+        public async Task<ApiResponse> UpdateClientAsync(Guid id, UpdateClientDto dto, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(id, ct);
             if (client is null)
@@ -122,16 +115,5 @@ namespace DealTrack.Application.Services
 
         private bool CanAccess(Client client) =>
             _currentUser.Role == UserRole.Admin || client.AssignedToUserId == _currentUser.UserId;
-
-        private static ClientResponseDto MapToDto(Client c) => new()
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Phone = c.Phone,
-            Notes = c.Notes,
-            AssignedToUserId = c.AssignedToUserId,
-            CreatedAt = c.CreatedAt,
-            UpdatedAt = c.UpdatedAt
-        };
     }
 }
