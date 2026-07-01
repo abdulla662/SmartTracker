@@ -4,6 +4,7 @@ using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
 
@@ -26,7 +27,7 @@ namespace DealTrack.Application.Services
             ClientFilterDto filter, CancellationToken ct = default)
         {
             var userId = _currentUser.UserId;
-            var isAdmin = _currentUser.Role == "Admin";
+            var isAdmin = _currentUser.Role == UserRole.Admin;
 
             var all = await _uow.Read<Client>().ListAsync(c =>
                 (isAdmin || c.AssignedToUserId == userId) &&
@@ -120,7 +121,7 @@ namespace DealTrack.Application.Services
         }
 
         private bool CanAccess(Client client) =>
-            _currentUser.Role == "Admin" || client.AssignedToUserId == _currentUser.UserId;
+            _currentUser.Role == UserRole.Admin || client.AssignedToUserId == _currentUser.UserId;
 
         private static ClientResponseDto MapToDto(Client c) => new()
         {

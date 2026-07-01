@@ -14,6 +14,7 @@ namespace DealTrack.Application.DependencyInjection
             services.AddScoped<IFollowUpService, FollowUpService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IInviteService, InviteService>();
 
             return services;
         }
