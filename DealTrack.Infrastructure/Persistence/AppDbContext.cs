@@ -27,6 +27,7 @@ namespace DealTrack.Infrastructure.Persistence
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
         public DbSet<ClientFinancialSummary> ClientFinancialSummaries => Set<ClientFinancialSummary>();
+        public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
 
         public void ApplyFilter(RequestFilterContext ctx) => _filterContext = ctx;
 

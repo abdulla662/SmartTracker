@@ -22,7 +22,7 @@ namespace DealTrack.Application.Services
         public async Task<ApiResponseT<DashboardSummaryDto>> GetSummaryAsync(CancellationToken ct = default)
         {
             var userId = Guid.Parse(_currentUser.UserId);
-            var isAdmin = _currentUser.Role == "Admin";
+            var isAdmin = _currentUser.Role == UserRole.Admin;
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
 

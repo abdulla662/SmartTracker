@@ -9,6 +9,7 @@ namespace DealTrack.Domain.Entities
         public SubscriptionPlan Plan { get; private set; }
 
         public ICollection<ApplicationUser> Users { get; private set; } = new List<ApplicationUser>();
+        public ICollection<TenantInvite> TenantInvites { get; private set; } = new List<TenantInvite>();
 
         private Tenant() { Name = string.Empty; }
 
