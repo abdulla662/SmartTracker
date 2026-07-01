@@ -1,4 +1,5 @@
-﻿using DealTrack.Application.Common;
+﻿using AutoMapper;
+using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.TenantInvite;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
@@ -18,19 +19,22 @@ namespace DealTrack.Application.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ICurrentUserService _currentUser;
         private readonly IEmailService _emailService;
+        private readonly IMapper _mapper;
 
         public InviteService(
             UserManager<ApplicationUser> userManager,
             IUnitOfWork uow,
             IStringLocalizer<SharedResource> localizer,
             ICurrentUserService currentUserService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IMapper mapper)
         {
             _userManager = userManager;
             _uow = uow;
             _localizer = localizer;
             _currentUser = currentUserService;
             _emailService = emailService;
+            _mapper = mapper;
         }
  
 
@@ -97,14 +101,7 @@ namespace DealTrack.Application.Services
 
             await _emailService.SendInviteEmailAsync(dto.Email, tenant!.Name, invite.InviteCode);
 
-            var result = new GetInviteDto
-            {
-                Email = invite.Email,
-                InviteCode = invite.InviteCode,
-                CreatedAt = invite.CreatedAt,
-                ExpiresAt = invite.ExpiresAt,
-                IsUsed = invite.IsUsed
-            };
+            var result = _mapper.Map<GetInviteDto>(invite);
 
             return ApiResponseT<GetInviteDto>.SuccessResponse(
                 result,
@@ -117,14 +114,7 @@ namespace DealTrack.Application.Services
             if (_currentUser.Role == UserRole.Admin)
             {
                 var invites = await _uow.Read<TenantInvite>().ListAsync(i => i.TenantId == _currentUser.TenantId, ct);
-                var result = invites.Select(invite => new GetInviteDto
-                {
-                    Email = invite.Email,
-                    InviteCode = invite.InviteCode,
-                    CreatedAt = invite.CreatedAt,
-                    ExpiresAt = invite.ExpiresAt,
-                    IsUsed = invite.IsUsed
-                }).ToList();
+                var result = _mapper.Map<List<GetInviteDto>>(invites);
 
                 return ApiResponseT<List<GetInviteDto>>.SuccessResponse(result, _localizer["InvitesRetrieved"]);
             }

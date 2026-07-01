@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AutoMapper;
+using DealTrack.Application.Mappings;
 using DealTrack.Application.Services;
 using DealTrack.Application.ServicesInterfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DealTrack.Application.DependencyInjection
 {
@@ -15,6 +17,8 @@ namespace DealTrack.Application.DependencyInjection
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IInviteService, InviteService>();
+            services.AddScoped<IProfileService, ProfileService>();
+            services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             return services;
         }

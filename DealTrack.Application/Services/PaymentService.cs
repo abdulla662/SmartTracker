@@ -1,3 +1,4 @@
+using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Payments;
 using DealTrack.Application.Interfaces;
@@ -14,46 +15,46 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IMapper _mapper;
 
-        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
+        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
+            _mapper = mapper;
         }
 
-        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetPaymentsForClientAsync(
-            Guid clientId, CancellationToken ct = default)
+        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetPaymentsForClientAsync(Guid clientId, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
             if (client is null)
-                return ApiResponseT<List<PaymentResponseDto>>.FailureResponse(
-                    _localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<List<PaymentResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == clientId, ct);
 
             var dtos = payments
                 .OrderByDescending(p => p.PaymentDate)
-                .Select(p => MapToDto(p, client.Name))
+                .Select(p => { var dto = _mapper.Map<PaymentResponseDto>(p); dto.ClientName = client.Name; return dto; })
                 .ToList();
 
             return ApiResponseT<List<PaymentResponseDto>>.SuccessResponse(dtos);
         }
 
-        public async Task<ApiResponseT<PaymentResponseDto>> CreatePaymentAsync(
-            CreatePaymentDto dto, CancellationToken ct = default)
+        public async Task<ApiResponseT<PaymentResponseDto>> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(dto.ClientId, ct);
             if (client is null)
-                return ApiResponseT<PaymentResponseDto>.FailureResponse(
-                    _localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<PaymentResponseDto>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             var payment = new Payment(_currentUser.TenantId, dto.ClientId, dto.Amount);
             await _uow.Write<Payment>().AddAsync(payment, ct);
             await _uow.SaveChangesAsync();
 
-            return ApiResponseT<PaymentResponseDto>.SuccessResponse(
-                MapToDto(payment, client.Name), _localizer["PaymentRecorded"], HttpStatusCode.Created);
+            var result = _mapper.Map<PaymentResponseDto>(payment);
+            result.ClientName = client.Name;
+
+            return ApiResponseT<PaymentResponseDto>.SuccessResponse(result, _localizer["PaymentRecorded"], HttpStatusCode.Created);
         }
 
         public async Task<ApiResponse> DeletePaymentAsync(Guid id, CancellationToken ct = default)
@@ -67,15 +68,5 @@ namespace DealTrack.Application.Services
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
         }
-
-        private static PaymentResponseDto MapToDto(Payment p, string clientName) => new()
-        {
-            Id = p.Id,
-            ClientId = p.ClientId,
-            ClientName = clientName,
-            Amount = p.Amount,
-            PaymentDate = p.PaymentDate,
-            CreatedAt = p.CreatedAt
-        };
     }
 }
