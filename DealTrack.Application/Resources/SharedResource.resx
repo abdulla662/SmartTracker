@@ -45,6 +45,9 @@
   <data name="FollowUpMarkedMissed" xml:space="preserve"><value>Marked as missed</value></data>
   <data name="FollowUpDeleted" xml:space="preserve"><value>Follow-up deleted successfully</value></data>
 
+  <!-- Plan Limits -->
+  <data name="PlanLimitReached" xml:space="preserve"><value>You have reached the limit of your current plan, please upgrade</value></data>
+
   <!-- Payments -->
   <data name="PaymentRecorded" xml:space="preserve"><value>Payment recorded successfully</value></data>
   <data name="PaymentNotFound" xml:space="preserve"><value>Payment not found</value></data>

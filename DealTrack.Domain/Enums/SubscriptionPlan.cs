@@ -3,8 +3,7 @@
     public enum SubscriptionPlan
     {
         Free = 0,
-        Individual = 1,
-        Team = 2,
-        Enterprise = 3
+        Pro = 1,
+        Enterprise = 2
     }
 }

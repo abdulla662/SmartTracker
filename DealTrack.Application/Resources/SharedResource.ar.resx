@@ -45,6 +45,9 @@
   <data name="FollowUpMarkedMissed" xml:space="preserve"><value>تم التحديد كفائت</value></data>
   <data name="FollowUpDeleted" xml:space="preserve"><value>تم حذف المتابعة بنجاح</value></data>
 
+  <!-- Plan Limits -->
+  <data name="PlanLimitReached" xml:space="preserve"><value>لقد وصلت للحد الأقصى في خطتك الحالية، يرجى الترقية</value></data>
+
   <!-- Payments -->
   <data name="PaymentRecorded" xml:space="preserve"><value>تم تسجيل الدفعة بنجاح</value></data>
   <data name="PaymentNotFound" xml:space="preserve"><value>الدفعة غير موجودة</value></data>

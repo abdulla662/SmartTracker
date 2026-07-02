@@ -48,8 +48,8 @@ namespace DealTrack.Application.Services
 
             UserRole role = request.SubscriptionPlan switch
             {
-                SubscriptionPlan.Free or SubscriptionPlan.Individual => UserRole.Sales,
-                SubscriptionPlan.Team => UserRole.TeamLead,
+                SubscriptionPlan.Free => UserRole.Sales,
+                SubscriptionPlan.Pro  => UserRole.TeamLead,
                 SubscriptionPlan.Enterprise => UserRole.Admin,
                 _ => throw new InvalidOperationException(_localizer["InvalidSubscriptionPlan"])
             };

@@ -4,6 +4,7 @@ using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
+using DealTrack.Domain.Constants;
 using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
@@ -69,6 +70,17 @@ namespace DealTrack.Application.Services
         public async Task<ApiResponseT<ClientResponseDto>> CreateClientAsync(CreateClientDto dto, CancellationToken ct = default)
         {
             var userId = _currentUser.UserId;
+
+            var maxClients = PlanLimits.GetMaxClients(_currentUser.SubscriptionPlan);
+            if (maxClients != int.MaxValue)
+            {
+                var clientCount = await _uow.Read<Client>()
+                    .CountAsync(c => c.AssignedToUserId == userId, ct);
+
+                if (clientCount >= maxClients)
+                    return ApiResponseT<ClientResponseDto>.FailureResponse(
+                        _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
+            }
 
             var phoneExists = await _uow.Read<Client>().AnyAsync(c => c.Phone == dto.Phone && c.AssignedToUserId == userId, ct);
             if (phoneExists)

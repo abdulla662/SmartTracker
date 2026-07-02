@@ -4,6 +4,7 @@ using DealTrack.Application.DTOs.TenantInvite;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
+using DealTrack.Domain.Constants;
 using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -89,6 +90,56 @@ namespace DealTrack.Application.Services
             var existingInvite = await _uow.Read<TenantInvite>().ListAsync(i => i.Email == dto.Email && i.TenantId == _currentUser.TenantId && !i.IsUsed, ct);
             if (existingInvite.Any())
                 return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["InviteAlreadySent"]);
+
+            // Plan limits check
+            if (_currentUser.Role == UserRole.Admin)
+            {
+                if (dto.TeamLeadId == null)
+                {
+                    // inviting a direct Sales
+                    var maxDirectSales = PlanLimits.GetMaxDirectSales(_currentUser.SubscriptionPlan);
+                    if (maxDirectSales != int.MaxValue)
+                    {
+                        var directSalesCount = await _uow.Read<ApplicationUser>()
+                            .CountAsync(u => u.TenantId == _currentUser.TenantId
+                                && u.Role == UserRole.Sales
+                                && u.TeamLeadId == null, ct);
+
+                        if (directSalesCount >= maxDirectSales)
+                            return ApiResponseT<GetInviteDto>.FailureResponse(
+                                _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
+                    }
+                }
+                else
+                {
+                    // inviting a TeamLead
+                    var maxTeamLeads = PlanLimits.GetMaxTeamLeads(_currentUser.SubscriptionPlan);
+                    if (maxTeamLeads != int.MaxValue)
+                    {
+                        var teamLeadsCount = await _uow.Read<ApplicationUser>()
+                            .CountAsync(u => u.TenantId == _currentUser.TenantId
+                                && u.Role == UserRole.TeamLead, ct);
+
+                        if (teamLeadsCount >= maxTeamLeads)
+                            return ApiResponseT<GetInviteDto>.FailureResponse(
+                                _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
+                    }
+                }
+            }
+
+            if (_currentUser.Role == UserRole.TeamLead)
+            {
+                var maxSales = PlanLimits.GetMaxSalesUnderTeamLead(_currentUser.SubscriptionPlan);
+                if (maxSales != int.MaxValue)
+                {
+                    var salesCount = await _uow.Read<ApplicationUser>()
+                        .CountAsync(u => u.TeamLeadId == Guid.Parse(_currentUser.UserId), ct);
+
+                    if (salesCount >= maxSales)
+                        return ApiResponseT<GetInviteDto>.FailureResponse(
+                            _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
+                }
+            }
 
             // if TeamLead is sending invite, automatically assign to himself
             var teamLeadId = _currentUser.Role == UserRole.TeamLead
