@@ -18,6 +18,7 @@ namespace DealTrack.Application.DependencyInjection
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IInviteService, InviteService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<ITeamService, TeamService>();
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             return services;
