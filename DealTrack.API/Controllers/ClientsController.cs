@@ -50,5 +50,9 @@ namespace DealTrack.API.Controllers
         {
             return await _clientService.DeleteClientAsync(id, ct);
         }
+        [HttpPut("{id}/reassign")]
+        [Authorize(Roles = "Admin,TeamLead")]
+        public async Task<ApiResponse> ReassignClient(Guid id, ReassignClientDto dto, CancellationToken ct)
+    => await _clientService.ReassignClientAsync(id, dto, ct);
     }
 }

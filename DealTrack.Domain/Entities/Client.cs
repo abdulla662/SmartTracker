@@ -33,5 +33,12 @@ namespace DealTrack.Domain.Entities
             Notes = notes;
             MarkUpdated();
         }
+        public void Reassign(string newSalesUserId, Guid? newTenantId = null)
+        {
+            AssignedToUserId = newSalesUserId;
+            if (newTenantId.HasValue)
+                TenantId = newTenantId.Value;
+            MarkUpdated();
+        }
     }
 }

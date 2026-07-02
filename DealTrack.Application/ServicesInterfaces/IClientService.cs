@@ -10,5 +10,7 @@ namespace DealTrack.Application.ServicesInterfaces
         Task<ApiResponseT<ClientResponseDto>> CreateClientAsync(CreateClientDto dto, CancellationToken ct = default);
         Task<ApiResponse> UpdateClientAsync(Guid id, UpdateClientDto dto, CancellationToken ct = default);
         Task<ApiResponse> DeleteClientAsync(Guid id, CancellationToken ct = default);
+        Task<ApiResponse> ReassignClientAsync(Guid clientId, ReassignClientDto dto, CancellationToken ct);
+
     }
 }

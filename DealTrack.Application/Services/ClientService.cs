@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
@@ -127,5 +127,50 @@ namespace DealTrack.Application.Services
 
         private bool CanAccess(Client client) =>
             _currentUser.Role == UserRole.Admin || client.AssignedToUserId == _currentUser.UserId;
+
+    public async Task<ApiResponse> ReassignClientAsync(Guid clientId, ReassignClientDto dto, CancellationToken ct)
+        {
+            var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
+            if (client is null)
+                return ApiResponse.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
+
+            var newSales = await _uow.Read<ApplicationUser>()
+                .GetSingleAsync(u => u.Id == dto.NewSalesUserId, ct);
+            if (newSales is null)
+                return ApiResponse.FailureResponse(_localizer["UserNotFound"], HttpStatusCode.NotFound);
+
+            if (_currentUser.Role == UserRole.Admin)
+            {
+                if (dto.NewTenantId.HasValue && dto.NewTenantId != _currentUser.TenantId)
+                {
+                    var isAdminInNewTenant = await _uow.Read<ApplicationUser>()
+                        .AnyAsync(u => u.Id == _currentUser.UserId
+                            && u.TenantId == dto.NewTenantId.Value, ct);
+
+                    if (!isAdminInNewTenant)
+                        return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
+                }
+            }
+            else if (_currentUser.Role == UserRole.TeamLead)
+            {
+                // TeamLead  بس ينقل لـ Sales في نفس الـ Tenant
+                if (dto.NewTenantId.HasValue)
+                    return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
+
+                if (newSales.TenantId != _currentUser.TenantId)
+                    return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
+            }
+            else
+            {
+                return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
+            }
+
+            client.Reassign(dto.NewSalesUserId, dto.NewTenantId);
+            await _uow.Write<Client>().UpdateAsync(client, ct);
+            await _uow.SaveChangesAsync();
+
+            return ApiResponse.SuccessResponse(message: _localizer["ClientReassigned"]);
+        }
+
     }
 }
