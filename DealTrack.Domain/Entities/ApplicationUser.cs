@@ -10,5 +10,6 @@ namespace DealTrack.Domain.Entities
         public UserRole Role { get; set; }
         public SubscriptionPlan SubscriptionPlan { get; set; }
         public Guid TenantId { get; set; }
+        public Guid? TeamLeadId { get; set; }
     }
 }

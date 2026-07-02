@@ -49,6 +49,9 @@ namespace DealTrack.Application.Services
 
             var payment = new Payment(_currentUser.TenantId, dto.ClientId, dto.Amount);
             await _uow.Write<Payment>().AddAsync(payment, ct);
+
+            await SyncFinancialSummaryAsync(dto.ClientId, ct);
+
             await _uow.SaveChangesAsync();
 
             var result = _mapper.Map<PaymentResponseDto>(payment);
@@ -64,6 +67,9 @@ namespace DealTrack.Application.Services
                 return ApiResponse.FailureResponse(_localizer["PaymentNotFound"], HttpStatusCode.NotFound);
 
             await _uow.SoftDelete<Payment>().SoftDeleteAsync(payment, ct);
+
+            await SyncFinancialSummaryAsync(payment.ClientId, ct, excludePaymentId: id);
+
             await _uow.SaveChangesAsync();
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
@@ -77,9 +83,38 @@ namespace DealTrack.Application.Services
 
             payment.UpdateAmount(dto.Amount);
             await _uow.Write<Payment>().UpdateAsync(payment, ct);
+
+            await SyncFinancialSummaryAsync(payment.ClientId, ct);
+
             await _uow.SaveChangesAsync();
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentUpdated"]);
+        }
+
+        // Recalculates and persists the ClientFinancialSummary for a given client.
+        // Pass excludePaymentId when a payment is being deleted (not yet removed from DB).
+        private async Task SyncFinancialSummaryAsync(Guid clientId, CancellationToken ct, Guid? excludePaymentId = null)
+        {
+            var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == clientId, ct);
+
+            var total = payments
+                .Where(p => excludePaymentId == null || p.Id != excludePaymentId)
+                .Sum(p => p.Amount);
+
+            var summary = await _uow.Read<ClientFinancialSummary>()
+                .GetSingleAsync(s => s.ClientId == clientId, ct);
+
+            if (summary is null)
+            {
+                summary = new ClientFinancialSummary(_currentUser.TenantId, clientId, 0);
+                summary.RecalculatePaidAmount(total);
+                await _uow.Write<ClientFinancialSummary>().AddAsync(summary, ct);
+            }
+            else
+            {
+                summary.RecalculatePaidAmount(total);
+                await _uow.Write<ClientFinancialSummary>().UpdateAsync(summary, ct);
+            }
         }
     }
 }

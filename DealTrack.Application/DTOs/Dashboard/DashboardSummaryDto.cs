@@ -10,6 +10,9 @@ namespace DealTrack.Application.DTOs.Dashboard
         public int CompletedTodayCount { get; set; }
         public int TotalClientsCount { get; set; }
 
+        public decimal TotalPaidAmount { get; set; }
+        public int TotalPaymentsCount { get; set; }
+
         public List<FollowUpResponseDto> TodayFollowUps { get; set; } = new();
         public List<FollowUpResponseDto> OverdueFollowUps { get; set; } = new();
     }

@@ -37,5 +37,16 @@ namespace DealTrack.Domain.Entities
             Status = PaidAmount >= TotalAmount ? PaymentStatus.Paid : PaymentStatus.PartiallyPaid;
             MarkUpdated();
         }
+
+        public void RecalculatePaidAmount(decimal newTotal)
+        {
+            PaidAmount = newTotal;
+            Status = PaidAmount == 0
+                ? PaymentStatus.Pending
+                : PaidAmount >= TotalAmount && TotalAmount > 0
+                    ? PaymentStatus.Paid
+                    : PaymentStatus.PartiallyPaid;
+            MarkUpdated();
+        }
     }
 }
