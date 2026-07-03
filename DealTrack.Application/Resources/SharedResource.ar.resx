@@ -1,55 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
             <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" />
-              <xsd:attribute name="xml:space" msdata:Ordinal="3" />
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" />
+                            <xsd:attribute name="xml:space" msdata:Ordinal="3" />
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
             </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
 
-  <!-- Auth -->
-  <data name="EmailAlreadyExists" xml:space="preserve"><value>البريد الإلكتروني موجود بالفعل</value></data>
-  <data name="InvalidSubscriptionPlan" xml:space="preserve"><value>خطة الاشتراك غير صالحة</value></data>
-  <data name="CompanyNameRequired" xml:space="preserve"><value>اسم الشركة مطلوب</value></data>
-  <data name="RegisterSuccess" xml:space="preserve"><value>تم تسجيل المستخدم بنجاح</value></data>
-  <data name="InvalidCredentials" xml:space="preserve"><value>البريد الإلكتروني أو كلمة المرور غير صحيحة</value></data>
-  <data name="LoginSuccess" xml:space="preserve"><value>تم تسجيل الدخول بنجاح</value></data>
+    <!-- Auth -->
+    <data name="EmailAlreadyExists" xml:space="preserve"><value>البريد الإلكتروني موجود بالفعل</value></data>
+    <data name="InvalidSubscriptionPlan" xml:space="preserve"><value>خطة الاشتراك غير صالحة</value></data>
+    <data name="CompanyNameRequired" xml:space="preserve"><value>اسم الشركة مطلوب</value></data>
+    <data name="RegisterSuccess" xml:space="preserve"><value>تم تسجيل المستخدم بنجاح</value></data>
+    <data name="InvalidCredentials" xml:space="preserve"><value>البريد الإلكتروني أو كلمة المرور غير صحيحة</value></data>
+    <data name="LoginSuccess" xml:space="preserve"><value>تم تسجيل الدخول بنجاح</value></data>
 
-  <!-- Clients -->
-  <data name="ClientPhoneExists" xml:space="preserve"><value>يوجد عميل بهذا الرقم بالفعل</value></data>
-  <data name="ClientNotFound" xml:space="preserve"><value>العميل غير موجود</value></data>
-  <data name="AccessDenied" xml:space="preserve"><value>غير مصرح بالوصول</value></data>
-  <data name="ClientCreated" xml:space="preserve"><value>تم إنشاء العميل بنجاح</value></data>
-  <data name="ClientUpdated" xml:space="preserve"><value>تم تحديث العميل بنجاح</value></data>
-  <data name="ClientDeleted" xml:space="preserve"><value>تم حذف العميل بنجاح</value></data>
+    <!-- Clients -->
+    <data name="ClientPhoneExists" xml:space="preserve"><value>يوجد عميل بهذا الرقم بالفعل</value></data>
+    <data name="ClientNotFound" xml:space="preserve"><value>العميل غير موجود</value></data>
+    <data name="AccessDenied" xml:space="preserve"><value>غير مصرح بالوصول</value></data>
+    <data name="ClientCreated" xml:space="preserve"><value>تم إنشاء العميل بنجاح</value></data>
+    <data name="ClientUpdated" xml:space="preserve"><value>تم تحديث العميل بنجاح</value></data>
+    <data name="ClientDeleted" xml:space="preserve"><value>تم حذف العميل بنجاح</value></data>
 
-  <!-- FollowUps -->
-  <data name="FollowUpCreated" xml:space="preserve"><value>تم إنشاء المتابعة بنجاح</value></data>
-  <data name="FollowUpNotFound" xml:space="preserve"><value>المتابعة غير موجودة</value></data>
-  <data name="FollowUpMarkedDone" xml:space="preserve"><value>تم التحديد كمكتمل</value></data>
-  <data name="FollowUpMarkedMissed" xml:space="preserve"><value>تم التحديد كفائت</value></data>
-  <data name="FollowUpDeleted" xml:space="preserve"><value>تم حذف المتابعة بنجاح</value></data>
+    <!-- FollowUps -->
+    <data name="FollowUpCreated" xml:space="preserve"><value>تم إنشاء المتابعة بنجاح</value></data>
+    <data name="FollowUpNotFound" xml:space="preserve"><value>المتابعة غير موجودة</value></data>
+    <data name="FollowUpMarkedDone" xml:space="preserve"><value>تم التحديد كمكتمل</value></data>
+    <data name="FollowUpMarkedMissed" xml:space="preserve"><value>تم التحديد كفائت</value></data>
+    <data name="FollowUpDeleted" xml:space="preserve"><value>تم حذف المتابعة بنجاح</value></data>
 
-  <!-- Plan Limits -->
-  <data name="PlanLimitReached" xml:space="preserve"><value>لقد وصلت للحد الأقصى في خطتك الحالية، يرجى الترقية</value></data>
+    <!-- Plan Limits -->
+    <data name="PlanLimitReached" xml:space="preserve"><value>لقد وصلت للحد الأقصى في خطتك الحالية، يرجى الترقية</value></data>
 
-  <!-- Payments -->
-  <data name="PaymentRecorded" xml:space="preserve"><value>تم تسجيل الدفعة بنجاح</value></data>
-  <data name="PaymentNotFound" xml:space="preserve"><value>الدفعة غير موجودة</value></data>
-  <data name="PaymentDeleted" xml:space="preserve"><value>تم حذف الدفعة بنجاح</value></data>
+    <!-- Payments -->
+    <data name="PaymentRecorded" xml:space="preserve"><value>تم تسجيل الدفعة بنجاح</value></data>
+    <data name="PaymentNotFound" xml:space="preserve"><value>الدفعة غير موجودة</value></data>
+    <data name="PaymentDeleted" xml:space="preserve"><value>تم حذف الدفعة بنجاح</value></data>
+
+
+    <data name="ClientReassigned" xml:space="preserve"><value>تم نقل العميل بنجاح</value></data>
+    <data name="UserNotFound" xml:space="preserve"><value>المستخدم غير موجود</value></data>
+
+    <data name="TransferRequestCreated" xml:space="preserve"><value>تم إرسال طلب النقل بنجاح</value></data>
+    <data name="TransferRequestAccepted" xml:space="preserve"><value>تم قبول طلب النقل</value></data>
+    <data name="TransferRequestRejected" xml:space="preserve"><value>تم رفض طلب النقل</value></data>
+    <data name="TransferRequestNotFound" xml:space="preserve"><value>طلب النقل غير موجود</value></data>
+    <data name="TransferRequestAlreadyPending" xml:space="preserve"><value>يوجد طلب نقل معلق لهذا المستخدم</value></data>
+    <data name="TransferRequestAlreadyHandled" xml:space="preserve"><value>تم التعامل مع هذا الطلب مسبقاً</value></data>
 </root>

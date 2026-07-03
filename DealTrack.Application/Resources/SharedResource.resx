@@ -1,55 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="data">
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
             <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" />
-              <xsd:attribute name="xml:space" msdata:Ordinal="3" />
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" />
+                            <xsd:attribute name="xml:space" msdata:Ordinal="3" />
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
             </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+    <resheader name="version"><value>2.0</value></resheader>
+    <resheader name="reader"><value>System.Resources.ResXResourceReader</value></resheader>
+    <resheader name="writer"><value>System.Resources.ResXResourceWriter</value></resheader>
 
-  <!-- Auth -->
-  <data name="EmailAlreadyExists" xml:space="preserve"><value>Email already exists</value></data>
-  <data name="InvalidSubscriptionPlan" xml:space="preserve"><value>Invalid subscription plan</value></data>
-  <data name="CompanyNameRequired" xml:space="preserve"><value>Company name is required</value></data>
-  <data name="RegisterSuccess" xml:space="preserve"><value>User registered successfully</value></data>
-  <data name="InvalidCredentials" xml:space="preserve"><value>Invalid email or password</value></data>
-  <data name="LoginSuccess" xml:space="preserve"><value>Login successful</value></data>
+    <!-- Auth -->
+    <data name="EmailAlreadyExists" xml:space="preserve"><value>Email already exists</value></data>
+    <data name="InvalidSubscriptionPlan" xml:space="preserve"><value>Invalid subscription plan</value></data>
+    <data name="CompanyNameRequired" xml:space="preserve"><value>Company name is required</value></data>
+    <data name="RegisterSuccess" xml:space="preserve"><value>User registered successfully</value></data>
+    <data name="InvalidCredentials" xml:space="preserve"><value>Invalid email or password</value></data>
+    <data name="LoginSuccess" xml:space="preserve"><value>Login successful</value></data>
 
-  <!-- Clients -->
-  <data name="ClientPhoneExists" xml:space="preserve"><value>A client with this phone number already exists</value></data>
-  <data name="ClientNotFound" xml:space="preserve"><value>Client not found</value></data>
-  <data name="AccessDenied" xml:space="preserve"><value>Access denied</value></data>
-  <data name="ClientCreated" xml:space="preserve"><value>Client created successfully</value></data>
-  <data name="ClientUpdated" xml:space="preserve"><value>Client updated successfully</value></data>
-  <data name="ClientDeleted" xml:space="preserve"><value>Client deleted successfully</value></data>
+    <!-- Clients -->
+    <data name="ClientPhoneExists" xml:space="preserve"><value>A client with this phone number already exists</value></data>
+    <data name="ClientNotFound" xml:space="preserve"><value>Client not found</value></data>
+    <data name="AccessDenied" xml:space="preserve"><value>Access denied</value></data>
+    <data name="ClientCreated" xml:space="preserve"><value>Client created successfully</value></data>
+    <data name="ClientUpdated" xml:space="preserve"><value>Client updated successfully</value></data>
+    <data name="ClientDeleted" xml:space="preserve"><value>Client deleted successfully</value></data>
 
-  <!-- FollowUps -->
-  <data name="FollowUpCreated" xml:space="preserve"><value>Follow-up created successfully</value></data>
-  <data name="FollowUpNotFound" xml:space="preserve"><value>Follow-up not found</value></data>
-  <data name="FollowUpMarkedDone" xml:space="preserve"><value>Marked as done</value></data>
-  <data name="FollowUpMarkedMissed" xml:space="preserve"><value>Marked as missed</value></data>
-  <data name="FollowUpDeleted" xml:space="preserve"><value>Follow-up deleted successfully</value></data>
+    <!-- FollowUps -->
+    <data name="FollowUpCreated" xml:space="preserve"><value>Follow-up created successfully</value></data>
+    <data name="FollowUpNotFound" xml:space="preserve"><value>Follow-up not found</value></data>
+    <data name="FollowUpMarkedDone" xml:space="preserve"><value>Marked as done</value></data>
+    <data name="FollowUpMarkedMissed" xml:space="preserve"><value>Marked as missed</value></data>
+    <data name="FollowUpDeleted" xml:space="preserve"><value>Follow-up deleted successfully</value></data>
 
-  <!-- Plan Limits -->
-  <data name="PlanLimitReached" xml:space="preserve"><value>You have reached the limit of your current plan, please upgrade</value></data>
+    <!-- Plan Limits -->
+    <data name="PlanLimitReached" xml:space="preserve"><value>You have reached the limit of your current plan, please upgrade</value></data>
 
-  <!-- Payments -->
-  <data name="PaymentRecorded" xml:space="preserve"><value>Payment recorded successfully</value></data>
-  <data name="PaymentNotFound" xml:space="preserve"><value>Payment not found</value></data>
-  <data name="PaymentDeleted" xml:space="preserve"><value>Payment deleted successfully</value></data>
+    <!-- Payments -->
+    <data name="PaymentRecorded" xml:space="preserve"><value>Payment recorded successfully</value></data>
+    <data name="PaymentNotFound" xml:space="preserve"><value>Payment not found</value></data>
+    <data name="PaymentDeleted" xml:space="preserve"><value>Payment deleted successfully</value></data>
+
+    <data name="ClientReassigned" xml:space="preserve"><value>Client reassigned successfully</value></data>
+    <data name="UserNotFound" xml:space="preserve"><value>User not found</value></data>
+
+    <data name="TransferRequestCreated" xml:space="preserve"><value>Transfer request sent successfully</value></data>
+    <data name="TransferRequestAccepted" xml:space="preserve"><value>Transfer request accepted</value></data>
+    <data name="TransferRequestRejected" xml:space="preserve"><value>Transfer request rejected</value></data>
+    <data name="TransferRequestNotFound" xml:space="preserve"><value>Transfer request not found</value></data>
+    <data name="TransferRequestAlreadyPending" xml:space="preserve"><value>A pending transfer request already exists for this user</value></data>
+    <data name="TransferRequestAlreadyHandled" xml:space="preserve"><value>This transfer request has already been handled</value></data>
 </root>

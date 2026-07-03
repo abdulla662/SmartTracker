@@ -153,7 +153,6 @@ namespace DealTrack.Application.Services
             }
             else if (_currentUser.Role == UserRole.TeamLead)
             {
-                // TeamLead  بس ينقل لـ Sales في نفس الـ Tenant
                 if (dto.NewTenantId.HasValue)
                     return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
 

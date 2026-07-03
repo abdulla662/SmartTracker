@@ -28,6 +28,8 @@ namespace DealTrack.Infrastructure.Persistence
         public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
         public DbSet<ClientFinancialSummary> ClientFinancialSummaries => Set<ClientFinancialSummary>();
         public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
+        public DbSet<TransferRequest> TransferRequests => Set<TransferRequest>();
+
 
         public void ApplyFilter(RequestFilterContext ctx) => _filterContext = ctx;
 
@@ -71,6 +73,9 @@ namespace DealTrack.Infrastructure.Persistence
                 (!ApplySoftDeleteFilter || !x.IsDeleted) &&
                 (CurrentTenantId == null || x.TenantId == CurrentTenantId));
 
+            modelBuilder.Entity<TransferRequest>().HasQueryFilter(x =>
+                (!ApplySoftDeleteFilter || !x.IsDeleted) &&
+                (CurrentTenantId == null || x.TenantId == CurrentTenantId));
             base.OnModelCreating(modelBuilder);
         }
     }
