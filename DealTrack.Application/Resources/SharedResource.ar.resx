@@ -83,4 +83,7 @@
     <data name="FollowUpUpdated" xml:space="preserve"><value>تم تحديث المتابعة بنجاح</value></data>
     <data name="InvalidRefreshToken" xml:space="preserve"><value>رمز التحديث غير صالح أو منتهي الصلاحية</value></data>
     <data name="LogoutSuccess" xml:space="preserve"><value>تم تسجيل الخروج بنجاح</value></data>
+    <data name="PasswordResetSent" xml:space="preserve"><value>إذا كان البريد موجوداً، سيتم إرسال رابط إعادة التعيين</value></data>
+    <data name="PasswordResetSuccess" xml:space="preserve"><value>تم إعادة تعيين كلمة المرور بنجاح</value></data>
+    <data name="InvalidResetToken" xml:space="preserve"><value>رمز إعادة التعيين غير صالح أو منتهي الصلاحية</value></data>
 </root>

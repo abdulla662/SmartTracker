@@ -1,6 +1,7 @@
-using DealTrack.Application.Common;
+﻿using DealTrack.Application.Common;
 using DealTrack.Application.DTOs;
 using DealTrack.Application.DTOs.Auth;
+using DealTrack.Application.DTOs.Auth.Forget_Password;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -24,19 +25,23 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ICurrentUserService _currentUser;
+        private readonly IEmailService _emailService;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
             IUnitOfWork uow,
             IStringLocalizer<SharedResource> localizer,
-            ICurrentUserService currentUser)
+            ICurrentUserService currentUser,
+            IEmailService emailService)
         {
             _userManager = userManager;
             _configuration = configuration;
             _uow = uow;
             _localizer = localizer;
             _currentUser = currentUser;
+            _emailService = emailService;
+
         }
 
         public async Task<ApiResponse> RegisterAsync(RegisterDto request)
@@ -184,6 +189,62 @@ namespace DealTrack.Application.Services
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public async Task<ApiResponse> ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken ct)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            // حتى لو الـ email مش موجود بنرجع نفس الرسالة
+            // عشان ما نكشلوش للهاكر إن الـ email موجود أو لأ
+            if (user is null)
+                return ApiResponse.SuccessResponse(message: _localizer["PasswordResetSent"]);
+
+            // بيلغي أي tokens قديمة للـ user
+            var oldTokens = await _uow.Read<PasswordResetToken>()
+                .ListAsync(t => t.UserId == user.Id && !t.IsUsed, ct);
+            foreach (var old in oldTokens)
+            {
+                old.MarkUsed();
+                await _uow.Write<PasswordResetToken>().UpdateAsync(old, ct);
+            }
+
+            var token = new PasswordResetToken(
+                user.Id,
+                Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
+                DateTime.UtcNow.AddHours(1));
+
+            await _uow.Write<PasswordResetToken>().AddAsync(token, ct);
+            await _uow.SaveChangesAsync();
+
+            var resetLink = $"{_configuration["AppSettings:FrontendUrl"]}/reset-password?token={token.Token}";
+            await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink);
+
+            return ApiResponse.SuccessResponse(message: _localizer["PasswordResetSent"]);
+        }
+
+        public async Task<ApiResponse> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken ct)
+        {
+            var stored = await _uow.Read<PasswordResetToken>()
+                .GetSingleAsync(t => t.Token == dto.Token, ct);
+
+            if (stored is null || !stored.IsValid)
+                return ApiResponse.FailureResponse(_localizer["InvalidResetToken"], HttpStatusCode.BadRequest);
+
+            var user = await _userManager.FindByIdAsync(stored.UserId);
+            if (user is null)
+                return ApiResponse.FailureResponse(_localizer["UserNotFound"], HttpStatusCode.NotFound);
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, dto.NewPassword);
+
+            if (!result.Succeeded)
+                return ApiResponse.FailureResponse(result.Errors.First().Description, HttpStatusCode.BadRequest);
+
+            stored.MarkUsed();
+            await _uow.Write<PasswordResetToken>().UpdateAsync(stored, ct);
+            await _uow.SaveChangesAsync();
+
+            return ApiResponse.SuccessResponse(message: _localizer["PasswordResetSuccess"]);
         }
     }
 }

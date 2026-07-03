@@ -30,6 +30,8 @@ namespace DealTrack.Infrastructure.Persistence
         public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
         public DbSet<TransferRequest> TransferRequests => Set<TransferRequest>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
 
 
         public void ApplyFilter(RequestFilterContext ctx) => _filterContext = ctx;

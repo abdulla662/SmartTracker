@@ -1,6 +1,7 @@
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs;
 using DealTrack.Application.DTOs.Auth;
+using DealTrack.Application.DTOs.Auth.Forget_Password;
 using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,5 +37,13 @@ namespace DealTrack.API.Controllers
         [Authorize]
         public async Task<ApiResponse> Logout(CancellationToken ct)
             => await _authService.LogoutAsync(ct);
+
+        [HttpPost("forgot-password")]
+        public async Task<ApiResponse> ForgotPassword(ForgotPasswordDto dto, CancellationToken ct)
+    => await _authService.ForgotPasswordAsync(dto, ct);
+
+        [HttpPost("reset-password")]
+        public async Task<ApiResponse> ResetPassword(ResetPasswordDto dto, CancellationToken ct)
+            => await _authService.ResetPasswordAsync(dto, ct);
     }
 }

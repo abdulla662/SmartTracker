@@ -252,4 +252,13 @@
   <data name="LogoutSuccess" xml:space="preserve">
     <value>Erfolgreich abgemeldet</value>
   </data>
+  <data name="PasswordResetSent" xml:space="preserve">
+    <value>Falls diese E-Mail existiert, wurde ein Reset-Link gesendet</value>
+  </data>
+  <data name="PasswordResetSuccess" xml:space="preserve">
+    <value>Passwort erfolgreich zurückgesetzt</value>
+  </data>
+  <data name="InvalidResetToken" xml:space="preserve">
+    <value>Ungültiger oder abgelaufener Reset-Token</value>
+  </data>
 </root>

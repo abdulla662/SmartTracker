@@ -249,6 +249,15 @@
   <data name="LogoutSuccess" xml:space="preserve">
     <value>Déconnexion réussie</value>
   </data>
+  <data name="PasswordResetSent" xml:space="preserve">
+    <value>Si cet email existe, un lien de réinitialisation a été envoyé</value>
+  </data>
+  <data name="PasswordResetSuccess" xml:space="preserve">
+    <value>Mot de passe réinitialisé avec succès</value>
+  </data>
+  <data name="InvalidResetToken" xml:space="preserve">
+    <value>Jeton de réinitialisation invalide ou expiré</value>
+  </data>
   <data name="TransferRequestAlreadyHandled" xml:space="preserve">
     <value>Cette demande de transfert a déjà été traitée</value>
   </data>

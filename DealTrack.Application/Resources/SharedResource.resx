@@ -82,4 +82,7 @@
     <data name="FollowUpUpdated" xml:space="preserve"><value>Follow-up updated successfully</value></data>
     <data name="InvalidRefreshToken" xml:space="preserve"><value>Invalid or expired refresh token</value></data>
     <data name="LogoutSuccess" xml:space="preserve"><value>Logged out successfully</value></data>
+    <data name="PasswordResetSent" xml:space="preserve"><value>If this email exists, a reset link has been sent</value></data>
+    <data name="PasswordResetSuccess" xml:space="preserve"><value>Password reset successfully</value></data>
+    <data name="InvalidResetToken" xml:space="preserve"><value>Invalid or expired reset token</value></data>
 </root>
