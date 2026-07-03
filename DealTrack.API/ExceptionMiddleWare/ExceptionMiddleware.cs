@@ -1,5 +1,6 @@
-﻿using DealTrack.Application.Common;
+using DealTrack.Application.Common;
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace DealTrack.API.ExceptionMiddleWare
@@ -25,22 +26,23 @@ namespace DealTrack.API.ExceptionMiddleWare
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
+                var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Anonymous";
+                var method = context.Request.Method;
+                var path = context.Request.Path;
+
+                _logger.LogError(ex,
+                    "Unhandled exception | {Method} {Path} | User: {UserId} | {Message}",
+                    method, path, userId, ex.Message);
 
                 var response = ApiResponse.FailureResponse(
                     "An unexpected error occurred",
-                    HttpStatusCode.InternalServerError
-                );
+                    HttpStatusCode.InternalServerError);
 
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = StatusCodes.Status200OK;
 
-                var json = JsonSerializer.Serialize(
-                    response,
-                    new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                    });
+                var json = JsonSerializer.Serialize(response,
+                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
                 await context.Response.WriteAsync(json);
             }
