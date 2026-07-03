@@ -24,30 +24,25 @@ namespace DealTrack.Application.Services
             var userGuid = Guid.Parse(userId);
             var role = _currentUser.Role;
 
-            // جيب الـ Users اللي ممكن يشوف Logs بتاعتهم
             List<Guid> visibleUserIds;
 
             if (role == UserRole.Admin)
             {
-                // Admin يشوف كل Logs في الـ Tenant
                 var allUsers = await _uow.Read<ApplicationUser>()
                     .ListAsync(u => u.TenantId == _currentUser.TenantId, ct);
                 visibleUserIds = allUsers.Select(u => Guid.Parse(u.Id)).ToList();
             }
             else if (role == UserRole.TeamLead)
             {
-                // TeamLead يشوف Logs بتاعته + Sales تبعينه
                 var teamMembers = await _uow.Read<ApplicationUser>()
                     .ListAsync(u => u.TeamLeadId == userGuid, ct);
                 visibleUserIds = teamMembers.Select(u => Guid.Parse(u.Id)).Append(userGuid).ToList();
             }
             else
             {
-                // Sales يشوف بس بتاعته
                 visibleUserIds = new List<Guid> { userGuid };
             }
 
-            // جيب الـ Logs
             var all = await _uow.Read<ActivityLog>().ListAsync(l =>
                 visibleUserIds.Contains(l.UserId) &&
                 (filter.EntityType == null || l.EntityType == filter.EntityType) &&
@@ -55,7 +50,6 @@ namespace DealTrack.Application.Services
                 (filter.From == null || l.CreatedAt >= filter.From) &&
                 (filter.To == null || l.CreatedAt <= filter.To), ct);
 
-            // جيب بيانات الـ Users عشان نعرض الاسم
             var userIds = all.Select(l => l.UserId.ToString()).Distinct().ToList();
             var users = await _uow.Read<ApplicationUser>()
                 .ListAsync(u => userIds.Contains(u.Id), ct);

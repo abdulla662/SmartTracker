@@ -15,12 +15,14 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly INotificationService _notifications;
 
-        public TransferRequestService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
+        public TransferRequestService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, INotificationService notifications)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
+            _notifications = notifications;
         }
 
         public async Task<ApiResponseT<TransferRequestResponseDto>> CreateTransferRequestAsync(CreateTransferRequestDto dto, CancellationToken ct)
@@ -50,6 +52,11 @@ namespace DealTrack.Application.Services
             var request = new TransferRequest(_currentUser.TenantId, dto.SalesUserId, _currentUser.UserId, dto.ToTeamLeadId);
             await _uow.Write<TransferRequest>().AddAsync(request, ct);
             await _uow.SaveChangesAsync();
+
+            await _notifications.CreateAsync(
+                Guid.Parse(dto.ToTeamLeadId), _currentUser.TenantId,
+                "Transfer Request", $"You have a new transfer request for a Sales member.",
+                NotificationType.TransferRequestReceived, ct);
 
             return ApiResponseT<TransferRequestResponseDto>.SuccessResponse(
                 await MapToDto(request, ct), _localizer["TransferRequestCreated"], HttpStatusCode.Created);
@@ -88,6 +95,11 @@ namespace DealTrack.Application.Services
 
             await _uow.Write<TransferRequest>().UpdateAsync(request, ct);
             await _uow.SaveChangesAsync();
+
+            var notifType = dto.Accept ? NotificationType.TransferRequestAccepted : NotificationType.TransferRequestRejected;
+            var notifTitle = dto.Accept ? "Transfer Accepted" : "Transfer Rejected";
+            var notifMsg = dto.Accept ? "Your transfer request has been accepted." : "Your transfer request has been rejected.";
+            await _notifications.CreateAsync(Guid.Parse(request.FromTeamLeadId), _currentUser.TenantId, notifTitle, notifMsg, notifType, ct);
 
             return ApiResponse.SuccessResponse(message: dto.Accept
                 ? _localizer["TransferRequestAccepted"]

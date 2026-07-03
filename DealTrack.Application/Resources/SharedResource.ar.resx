@@ -63,4 +63,22 @@
     <data name="TransferRequestNotFound" xml:space="preserve"><value>طلب النقل غير موجود</value></data>
     <data name="TransferRequestAlreadyPending" xml:space="preserve"><value>يوجد طلب نقل معلق لهذا المستخدم</value></data>
     <data name="TransferRequestAlreadyHandled" xml:space="preserve"><value>تم التعامل مع هذا الطلب مسبقاً</value></data>
+
+    <!-- Notifications -->
+    <data name="NotificationNotFound" xml:space="preserve"><value>الإشعار غير موجود</value></data>
+    <data name="NotificationMarkedRead" xml:space="preserve"><value>تم تحديد الإشعار كمقروء</value></data>
+    <data name="AllNotificationsMarkedRead" xml:space="preserve"><value>تم تحديد جميع الإشعارات كمقروءة</value></data>
+
+    <!-- Invite -->
+    <data name="InviteAccepted" xml:space="preserve"><value>تم قبول الدعوة بنجاح</value></data>
+    <data name="InviteCreated" xml:space="preserve"><value>تم إرسال الدعوة بنجاح</value></data>
+    <data name="InvitesRetrieved" xml:space="preserve"><value>تم استرجاع الدعوات بنجاح</value></data>
+    <data name="InvalidInviteCode" xml:space="preserve"><value>رمز الدعوة غير صالح</value></data>
+    <data name="InviteExpired" xml:space="preserve"><value>انتهت صلاحية الدعوة</value></data>
+    <data name="InviteAlreadyUsed" xml:space="preserve"><value>تم استخدام الدعوة مسبقاً</value></data>
+    <data name="UserAlreadyInCompany" xml:space="preserve"><value>المستخدم ينتمي لهذه الشركة بالفعل</value></data>
+    <data name="InviteAlreadySent" xml:space="preserve"><value>تم إرسال دعوة لهذا البريد الإلكتروني مسبقاً</value></data>
+    <data name="Unauthorized" xml:space="preserve"><value>غير مصرح</value></data>
+    <data name="PaymentUpdated" xml:space="preserve"><value>تم تحديث الدفعة بنجاح</value></data>
+    <data name="FollowUpUpdated" xml:space="preserve"><value>تم تحديث المتابعة بنجاح</value></data>
 </root>

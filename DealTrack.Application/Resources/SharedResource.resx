@@ -62,4 +62,22 @@
     <data name="TransferRequestNotFound" xml:space="preserve"><value>Transfer request not found</value></data>
     <data name="TransferRequestAlreadyPending" xml:space="preserve"><value>A pending transfer request already exists for this user</value></data>
     <data name="TransferRequestAlreadyHandled" xml:space="preserve"><value>This transfer request has already been handled</value></data>
+
+    <!-- Notifications -->
+    <data name="NotificationNotFound" xml:space="preserve"><value>Notification not found</value></data>
+    <data name="NotificationMarkedRead" xml:space="preserve"><value>Notification marked as read</value></data>
+    <data name="AllNotificationsMarkedRead" xml:space="preserve"><value>All notifications marked as read</value></data>
+
+    <!-- Invite -->
+    <data name="InviteAccepted" xml:space="preserve"><value>Invite accepted successfully</value></data>
+    <data name="InviteCreated" xml:space="preserve"><value>Invite sent successfully</value></data>
+    <data name="InvitesRetrieved" xml:space="preserve"><value>Invites retrieved successfully</value></data>
+    <data name="InvalidInviteCode" xml:space="preserve"><value>Invalid invite code</value></data>
+    <data name="InviteExpired" xml:space="preserve"><value>Invite has expired</value></data>
+    <data name="InviteAlreadyUsed" xml:space="preserve"><value>Invite has already been used</value></data>
+    <data name="UserAlreadyInCompany" xml:space="preserve"><value>User already belongs to this company</value></data>
+    <data name="InviteAlreadySent" xml:space="preserve"><value>An invite has already been sent to this email</value></data>
+    <data name="Unauthorized" xml:space="preserve"><value>Unauthorized</value></data>
+    <data name="PaymentUpdated" xml:space="preserve"><value>Payment updated successfully</value></data>
+    <data name="FollowUpUpdated" xml:space="preserve"><value>Follow-up updated successfully</value></data>
 </root>

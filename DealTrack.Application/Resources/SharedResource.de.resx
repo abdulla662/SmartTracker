@@ -204,4 +204,46 @@
   <data name="TransferRequestAlreadyHandled" xml:space="preserve">
     <value>Diese Transferanfrage wurde bereits bearbeitet</value>
   </data>
+  <data name="NotificationNotFound" xml:space="preserve">
+    <value>Benachrichtigung nicht gefunden</value>
+  </data>
+  <data name="NotificationMarkedRead" xml:space="preserve">
+    <value>Benachrichtigung als gelesen markiert</value>
+  </data>
+  <data name="AllNotificationsMarkedRead" xml:space="preserve">
+    <value>Alle Benachrichtigungen als gelesen markiert</value>
+  </data>
+  <data name="InviteAccepted" xml:space="preserve">
+    <value>Einladung erfolgreich angenommen</value>
+  </data>
+  <data name="InviteCreated" xml:space="preserve">
+    <value>Einladung erfolgreich gesendet</value>
+  </data>
+  <data name="InvitesRetrieved" xml:space="preserve">
+    <value>Einladungen erfolgreich abgerufen</value>
+  </data>
+  <data name="InvalidInviteCode" xml:space="preserve">
+    <value>Ungültiger Einladungscode</value>
+  </data>
+  <data name="InviteExpired" xml:space="preserve">
+    <value>Einladung ist abgelaufen</value>
+  </data>
+  <data name="InviteAlreadyUsed" xml:space="preserve">
+    <value>Einladung wurde bereits verwendet</value>
+  </data>
+  <data name="UserAlreadyInCompany" xml:space="preserve">
+    <value>Benutzer gehört bereits zu diesem Unternehmen</value>
+  </data>
+  <data name="InviteAlreadySent" xml:space="preserve">
+    <value>Eine Einladung wurde bereits an diese E-Mail gesendet</value>
+  </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Nicht autorisiert</value>
+  </data>
+  <data name="PaymentUpdated" xml:space="preserve">
+    <value>Zahlung erfolgreich aktualisiert</value>
+  </data>
+  <data name="FollowUpUpdated" xml:space="preserve">
+    <value>Nachverfolgung erfolgreich aktualisiert</value>
+  </data>
 </root>

@@ -21,6 +21,7 @@ namespace DealTrack.Application.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notifications;
 
         public InviteService(
             UserManager<ApplicationUser> userManager,
@@ -28,7 +29,8 @@ namespace DealTrack.Application.Services
             IStringLocalizer<SharedResource> localizer,
             ICurrentUserService currentUserService,
             IEmailService emailService,
-            IMapper mapper)
+            IMapper mapper,
+            INotificationService notifications)
         {
             _userManager = userManager;
             _uow = uow;
@@ -36,6 +38,7 @@ namespace DealTrack.Application.Services
             _currentUser = currentUserService;
             _emailService = emailService;
             _mapper = mapper;
+            _notifications = notifications;
         }
  
 
@@ -71,8 +74,15 @@ namespace DealTrack.Application.Services
 
             invite.MarkUsed();
             await _uow.Write<TenantInvite>().UpdateAsync(invite, ct);
-
             await _uow.SaveChangesAsync();
+
+            if (invite.TeamLeadId.HasValue)
+            {
+                await _notifications.CreateAsync(
+                    invite.TeamLeadId.Value, invite.TenantId,
+                    "New Member Joined", $"{dto.FullName} has joined your team.",
+                    NotificationType.NewMemberJoined, ct);
+            }
 
             return ApiResponseT<AcceptInviteDto>.SuccessResponse(dto, _localizer["InviteAccepted"]);
         }

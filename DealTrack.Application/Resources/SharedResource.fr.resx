@@ -201,6 +201,48 @@
   <data name="TransferRequestAlreadyPending" xml:space="preserve">
     <value>Une demande de transfert en attente existe déjà pour cet utilisateur</value>
   </data>
+  <data name="NotificationNotFound" xml:space="preserve">
+    <value>Notification introuvable</value>
+  </data>
+  <data name="NotificationMarkedRead" xml:space="preserve">
+    <value>Notification marquée comme lue</value>
+  </data>
+  <data name="AllNotificationsMarkedRead" xml:space="preserve">
+    <value>Toutes les notifications marquées comme lues</value>
+  </data>
+  <data name="InviteAccepted" xml:space="preserve">
+    <value>Invitation acceptée avec succès</value>
+  </data>
+  <data name="InviteCreated" xml:space="preserve">
+    <value>Invitation envoyée avec succès</value>
+  </data>
+  <data name="InvitesRetrieved" xml:space="preserve">
+    <value>Invitations récupérées avec succès</value>
+  </data>
+  <data name="InvalidInviteCode" xml:space="preserve">
+    <value>Code d'invitation invalide</value>
+  </data>
+  <data name="InviteExpired" xml:space="preserve">
+    <value>L'invitation a expiré</value>
+  </data>
+  <data name="InviteAlreadyUsed" xml:space="preserve">
+    <value>L'invitation a déjà été utilisée</value>
+  </data>
+  <data name="UserAlreadyInCompany" xml:space="preserve">
+    <value>L'utilisateur appartient déjà à cette entreprise</value>
+  </data>
+  <data name="InviteAlreadySent" xml:space="preserve">
+    <value>Une invitation a déjà été envoyée à cet email</value>
+  </data>
+  <data name="Unauthorized" xml:space="preserve">
+    <value>Non autorisé</value>
+  </data>
+  <data name="PaymentUpdated" xml:space="preserve">
+    <value>Paiement mis à jour avec succès</value>
+  </data>
+  <data name="FollowUpUpdated" xml:space="preserve">
+    <value>Suivi mis à jour avec succès</value>
+  </data>
   <data name="TransferRequestAlreadyHandled" xml:space="preserve">
     <value>Cette demande de transfert a déjà été traitée</value>
   </data>
