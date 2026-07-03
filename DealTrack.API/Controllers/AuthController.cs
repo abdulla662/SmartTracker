@@ -3,6 +3,7 @@ using DealTrack.Application.DTOs;
 using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DealTrack.API.Controllers
 {
@@ -25,6 +26,7 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<ApiResponseT<string>> LoginAsync(
             LoginDto request)
         {
