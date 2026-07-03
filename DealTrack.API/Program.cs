@@ -65,7 +65,6 @@ builder.Services.AddRateLimiter(options =>
 
     options.RejectionStatusCode = 429;
 
-    // Apply general policy to all endpoints by default
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
         var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
