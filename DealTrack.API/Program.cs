@@ -1,8 +1,10 @@
 using DealTrack.API.DependencyInjection;
-using DealTrack.API.Filters;
 using DealTrack.API.ExceptionMiddleWare;
+using DealTrack.API.Filters;
 using DealTrack.Application.DependencyInjection;
+using DealTrack.Infrastructure.BackgroundJobs;
 using DealTrack.Infrastructure.DependencyInjection;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +48,15 @@ builder.Services.AddApiServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<MarkMissedFollowUpsJob>();
+
 var app = builder.Build();
 
 // Pipeline
@@ -69,5 +80,14 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseHangfireDashboard("/hangfire");
+
+using (var scope = app.Services.CreateScope())
+{
+    RecurringJob.AddOrUpdate<MarkMissedFollowUpsJob>(
+        "mark-missed-followups",
+        job => job.ExecuteAsync(),
+        Cron.Daily);
+}
 app.MapControllers();
 app.Run();
