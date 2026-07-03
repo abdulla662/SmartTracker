@@ -16,13 +16,15 @@ namespace DealTrack.Application.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
+        private readonly IActivityLogService _activityLog;
 
-        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
+        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
+            _activityLog = activityLog;
         }
 
         public async Task<ApiResponseT<List<PaymentResponseDto>>> GetPaymentsForClientAsync(Guid clientId, CancellationToken ct = default)
@@ -53,6 +55,7 @@ namespace DealTrack.Application.Services
             await SyncFinancialSummaryAsync(dto.ClientId, ct);
 
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("CreatePayment", payment.Id, "Payment", ct);
 
             var result = _mapper.Map<PaymentResponseDto>(payment);
             result.ClientName = client.Name;
@@ -71,6 +74,7 @@ namespace DealTrack.Application.Services
             await SyncFinancialSummaryAsync(payment.ClientId, ct, excludePaymentId: id);
 
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("DeletePayment", payment.Id, "Payment", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
         }
@@ -87,12 +91,11 @@ namespace DealTrack.Application.Services
             await SyncFinancialSummaryAsync(payment.ClientId, ct);
 
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("UpdatePayment", payment.Id, "Payment", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentUpdated"]);
         }
 
-        // Recalculates and persists the ClientFinancialSummary for a given client.
-        // Pass excludePaymentId when a payment is being deleted (not yet removed from DB).
         private async Task SyncFinancialSummaryAsync(Guid clientId, CancellationToken ct, Guid? excludePaymentId = null)
         {
             var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == clientId, ct);

@@ -8,15 +8,17 @@ namespace DealTrack.Domain.Entities
         public Guid UserId { get; private set; }
         public string Action { get; private set; }
         public Guid? EntityId { get; private set; }
+        public string? EntityType { get; private set; }
 
         private ActivityLog() { Action = string.Empty; }
 
-        public ActivityLog(Guid tenantId, Guid userId, string action, Guid? entityId = null)
+        public ActivityLog(Guid tenantId, Guid userId, string action, Guid? entityId = null, string? entityType = null)
         {
             TenantId = tenantId;
             UserId = userId;
             Action = action;
             EntityId = entityId;
+            EntityType = entityType;
         }
     }
 }

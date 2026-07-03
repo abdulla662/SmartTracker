@@ -16,13 +16,15 @@ namespace DealTrack.Application.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
+        private readonly IActivityLogService _activityLog;
 
-        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
+        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
+            _activityLog = activityLog;
         }
 
         public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetFollowUpsForClientAsync(Guid clientId, CancellationToken ct = default)
@@ -50,6 +52,7 @@ namespace DealTrack.Application.Services
             var followUp = new FollowUp(_currentUser.TenantId, dto.ClientId, dto.FollowUpDate, Guid.Parse(_currentUser.UserId), dto.Notes);
             await _uow.Write<FollowUp>().AddAsync(followUp, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("CreateFollowUp", followUp.Id, "FollowUp", ct);
 
             var result = _mapper.Map<FollowUpResponseDto>(followUp);
             result.ClientName = client.Name;
@@ -66,6 +69,7 @@ namespace DealTrack.Application.Services
             followUp.MarkDone();
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("MarkFollowUpDone", followUp.Id, "FollowUp", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedDone"]);
         }
@@ -79,6 +83,7 @@ namespace DealTrack.Application.Services
             followUp.MarkMissed();
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("MarkFollowUpMissed", followUp.Id, "FollowUp", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedMissed"]);
         }
@@ -91,6 +96,7 @@ namespace DealTrack.Application.Services
 
             await _uow.SoftDelete<FollowUp>().SoftDeleteAsync(followUp, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("DeleteFollowUp", followUp.Id, "FollowUp", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpDeleted"]);
         }
@@ -100,9 +106,12 @@ namespace DealTrack.Application.Services
             var followUp = await _uow.Read<FollowUp>().GetByIdAsync(id, ct);
             if (followUp is null)
                 return ApiResponse.FailureResponse(_localizer["FollowUpNotFound"], HttpStatusCode.NotFound);
+
             followUp.UpdateNotes(dto.Notes);
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("UpdateFollowUp", followUp.Id, "FollowUp", ct);
+
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpUpdated"]);
         }
     }

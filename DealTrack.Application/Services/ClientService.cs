@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
@@ -18,13 +18,15 @@ namespace DealTrack.Application.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
+        private readonly IActivityLogService _activityLog;
 
-        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper)
+        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
+            _activityLog = activityLog;
         }
 
         public async Task<ApiResponseT<PagedResult<ClientResponseDto>>> GetClientsAsync(ClientFilterDto filter, CancellationToken ct = default)
@@ -89,6 +91,7 @@ namespace DealTrack.Application.Services
             var client = new Client(_currentUser.TenantId, dto.Name, dto.Phone, dto.Notes, userId);
             await _uow.Write<Client>().AddAsync(client, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("CreateClient", client.Id, "Client", ct);
 
             return ApiResponseT<ClientResponseDto>.SuccessResponse(
                 _mapper.Map<ClientResponseDto>(client), _localizer["ClientCreated"], HttpStatusCode.Created);
@@ -106,6 +109,7 @@ namespace DealTrack.Application.Services
             client.Update(dto.Name, dto.Phone, dto.Notes);
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("UpdateClient", client.Id, "Client", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientUpdated"]);
         }
@@ -121,14 +125,12 @@ namespace DealTrack.Application.Services
 
             await _uow.SoftDelete<Client>().SoftDeleteAsync(client, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("DeleteClient", client.Id, "Client", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientDeleted"]);
         }
 
-        private bool CanAccess(Client client) =>
-            _currentUser.Role == UserRole.Admin || client.AssignedToUserId == _currentUser.UserId;
-
-    public async Task<ApiResponse> ReassignClientAsync(Guid clientId, ReassignClientDto dto, CancellationToken ct)
+        public async Task<ApiResponse> ReassignClientAsync(Guid clientId, ReassignClientDto dto, CancellationToken ct)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
             if (client is null)
@@ -167,9 +169,12 @@ namespace DealTrack.Application.Services
             client.Reassign(dto.NewSalesUserId, dto.NewTenantId);
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
+            await _activityLog.LogAsync("ReassignClient", client.Id, "Client", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientReassigned"]);
         }
 
+        private bool CanAccess(Client client) =>
+            _currentUser.Role == UserRole.Admin || client.AssignedToUserId == _currentUser.UserId;
     }
 }
