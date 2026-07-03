@@ -80,8 +80,10 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseHangfireDashboard("/hangfire");
-
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 using (var scope = app.Services.CreateScope())
 {
     RecurringJob.AddOrUpdate<MarkMissedFollowUpsJob>(
