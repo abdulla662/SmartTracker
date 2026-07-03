@@ -243,6 +243,12 @@
   <data name="FollowUpUpdated" xml:space="preserve">
     <value>Suivi mis à jour avec succès</value>
   </data>
+  <data name="InvalidRefreshToken" xml:space="preserve">
+    <value>Jeton de rafraîchissement invalide ou expiré</value>
+  </data>
+  <data name="LogoutSuccess" xml:space="preserve">
+    <value>Déconnexion réussie</value>
+  </data>
   <data name="TransferRequestAlreadyHandled" xml:space="preserve">
     <value>Cette demande de transfert a déjà été traitée</value>
   </data>

@@ -246,4 +246,10 @@
   <data name="FollowUpUpdated" xml:space="preserve">
     <value>Nachverfolgung erfolgreich aktualisiert</value>
   </data>
+  <data name="InvalidRefreshToken" xml:space="preserve">
+    <value>Ungültiges oder abgelaufenes Refresh-Token</value>
+  </data>
+  <data name="LogoutSuccess" xml:space="preserve">
+    <value>Erfolgreich abgemeldet</value>
+  </data>
 </root>

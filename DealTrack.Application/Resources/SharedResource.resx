@@ -80,4 +80,6 @@
     <data name="Unauthorized" xml:space="preserve"><value>Unauthorized</value></data>
     <data name="PaymentUpdated" xml:space="preserve"><value>Payment updated successfully</value></data>
     <data name="FollowUpUpdated" xml:space="preserve"><value>Follow-up updated successfully</value></data>
+    <data name="InvalidRefreshToken" xml:space="preserve"><value>Invalid or expired refresh token</value></data>
+    <data name="LogoutSuccess" xml:space="preserve"><value>Logged out successfully</value></data>
 </root>
