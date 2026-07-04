@@ -12,10 +12,14 @@ namespace DealTrack.API.Controllers
     public class ClientsController : ControllerBase
     {
         private readonly IClientService _clientService;
+        private readonly IExcelExportService _excelExportService;
+        private readonly IExcelImportService _excelImportService;
 
-        public ClientsController(IClientService clientService)
+        public ClientsController(IClientService clientService, IExcelExportService excelExportService, IExcelImportService excelImportService)
         {
             _clientService = clientService;
+            _excelExportService = excelExportService;
+            _excelImportService = excelImportService;
         }
 
         [HttpGet]
@@ -53,6 +57,22 @@ namespace DealTrack.API.Controllers
         [HttpPut("{id}/reassign")]
         [Authorize(Roles = "Admin,TeamLead")]
         public async Task<ApiResponse> ReassignClient(Guid id, ReassignClientDto dto, CancellationToken ct)
-    => await _clientService.ReassignClientAsync(id, dto, ct);
+            => await _clientService.ReassignClientAsync(id, dto, ct);
+
+        [HttpGet("export")]
+        [Authorize(Policy = "ProOrEnterprise")]
+        public async Task<IActionResult> ExportClients(CancellationToken ct)
+        {
+            var bytes = await _excelExportService.ExportClientsAsync(ct);
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "clients.xlsx");
+        }
+
+        [HttpPost("import")]
+        [Authorize(Policy = "ProOrEnterprise")]
+        public async Task<ApiResponseT<ImportResultDto>> ImportClients(IFormFile file, CancellationToken ct)
+        {
+            var result = await _excelImportService.ImportClientsAsync(file, ct);
+            return ApiResponseT<ImportResultDto>.SuccessResponse(result);
+        }
     }
 }

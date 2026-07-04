@@ -31,6 +31,8 @@ namespace DealTrack.Infrastructure.DependencyInjection
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IExcelExportService, ExcelExportService>();
+            services.AddScoped<IExcelImportService, ExcelImportService>();
             services.AddIdentity<ApplicationUser, IdentityRole>()
           .AddEntityFrameworkStores<AppDbContext>()
           .AddDefaultTokenProviders();
@@ -63,7 +65,11 @@ namespace DealTrack.Infrastructure.DependencyInjection
                     };
             });
 
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("ProOrEnterprise", policy =>
+                    policy.RequireClaim("SubscriptionPlan", "Pro", "Enterprise"));
+            });
             return services;
         }
     }

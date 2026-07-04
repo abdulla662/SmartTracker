@@ -15,11 +15,13 @@ namespace DealTrack.Application.Services
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IRealtimeNotificationService _realtimeService;
 
-        public NotificationService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
+        public NotificationService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IRealtimeNotificationService realtimeService)
         {
             _uow = uow;
             _currentUser = currentUser;
+            _realtimeService = realtimeService;
             _localizer = localizer;
         }
 
@@ -28,6 +30,15 @@ namespace DealTrack.Application.Services
             var notification = new Notification(tenantId, userId, title, message, type);
             await _uow.Write<Notification>().AddAsync(notification, ct);
             await _uow.SaveChangesAsync();
+            await _realtimeService.SendNotificationAsync(userId.ToString(), new
+            {
+                id = notification.Id,
+                title = notification.Title,
+                message = notification.Message,
+                type = notification.Type,
+                isRead = notification.IsRead,
+                createdAt = notification.CreatedAt
+            }, ct);
         }
 
         public async Task<ApiResponseT<List<NotificationResponseDto>>> GetMyNotificationsAsync(CancellationToken ct)

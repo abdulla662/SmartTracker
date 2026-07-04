@@ -24,6 +24,15 @@ namespace DealTrack.API.ExceptionMiddleWare
             {
                 await _next(context);
             }
+            catch (InvalidOperationException ex)
+            {
+                var response = ApiResponse.FailureResponse(ex.Message, HttpStatusCode.BadRequest);
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                var json = JsonSerializer.Serialize(response,
+                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                await context.Response.WriteAsync(json);
+            }
             catch (Exception ex)
             {
                 var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Anonymous";

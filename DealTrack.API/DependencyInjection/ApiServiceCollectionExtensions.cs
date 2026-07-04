@@ -1,5 +1,7 @@
 ﻿using DealTrack.API.Filters;
+using DealTrack.API.Services;
 using DealTrack.Application.Common;
+using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -11,6 +13,7 @@ namespace DealTrack.API.DependencyInjection
             this IServiceCollection services)
         {
             services.AddScoped<RequestFilterContext>();
+            services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
 
             services.Configure<MvcOptions>(options =>
             {

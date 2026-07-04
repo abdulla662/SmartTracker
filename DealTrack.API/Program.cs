@@ -1,6 +1,7 @@
 using DealTrack.API.DependencyInjection;
 using DealTrack.API.ExceptionMiddleWare;
 using DealTrack.API.Filters;
+using DealTrack.API.Hubs;
 using DealTrack.Application.DependencyInjection;
 using DealTrack.Infrastructure.BackgroundJobs;
 using DealTrack.Infrastructure.DependencyInjection;
@@ -24,6 +25,7 @@ builder.Host.UseSerilog();
 
 // Controllers & Swagger
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -141,4 +143,5 @@ using (var scope = app.Services.CreateScope())
         Cron.Daily);
 }
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notifications");
 app.Run();
