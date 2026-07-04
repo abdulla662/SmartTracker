@@ -1,4 +1,5 @@
 using DealTrack.API.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using DealTrack.API.ExceptionMiddleWare;
 using DealTrack.API.Filters;
 using DealTrack.API.Hubs;
@@ -143,6 +144,14 @@ using (var scope = app.Services.CreateScope())
         job => job.ExecuteAsync(),
         Cron.Daily);
 }
+// Run SQL scripts (Stored Procedures) on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DealTrack.Infrastructure.Persistence.AppDbContext>();
+    await db.Database.MigrateAsync();
+    await DealTrack.Infrastructure.Persistence.SqlScriptRunner.RunStoredProceduresAsync(db);
+}
+
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.Run();

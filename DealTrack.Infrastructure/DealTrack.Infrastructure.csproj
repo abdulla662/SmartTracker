@@ -41,4 +41,8 @@
 		<ProjectReference Include="..\DealTrack.Domain\DealTrack.Domain.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="SqlScripts\*.sql" />
+	</ItemGroup>
+
 </Project>

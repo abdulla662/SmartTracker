@@ -46,7 +46,7 @@ namespace DealTrack.Infrastructure.Services
             if (await reader.ReadAsync(ct))
             {
                 result.TotalClientsCount = reader.GetInt32(0);
-                result.TodayFollowUpsCount = reader.GetInt32(1); // NewClientsToday mapped here temporarily
+                result.TodayFollowUpsCount = reader.GetInt32(1); 
             }
 
             // Result set 2: Follow-ups

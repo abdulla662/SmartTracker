@@ -30,7 +30,6 @@ namespace DealTrack.Application.Services
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
 
-            // FollowUp.CreatedByUserId is Guid; Client.AssignedToUserId is string
             List<Guid> visibleUserGuids;
             List<string> visibleUserIds;
 
