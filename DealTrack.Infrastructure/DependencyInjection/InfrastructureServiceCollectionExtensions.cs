@@ -35,6 +35,7 @@ namespace DealTrack.Infrastructure.DependencyInjection
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
+            services.AddScoped<IDashboardService, DashboardService>();
             services.AddHttpClient<ISubscriptionService, SubscriptionService>();
             services.AddIdentity<ApplicationUser, IdentityRole>()
           .AddEntityFrameworkStores<AppDbContext>()
