@@ -19,14 +19,16 @@ namespace DealTrack.Application.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
         private readonly IActivityLogService _activityLog;
+        private readonly INotificationService _notifications;
 
-        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
+        public ClientService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog, INotificationService notifications)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
             _activityLog = activityLog;
+            _notifications = notifications;
         }
 
         public async Task<ApiResponseT<PagedResult<ClientResponseDto>>> GetClientsAsync(ClientFilterDto filter, CancellationToken ct = default)
@@ -170,6 +172,13 @@ namespace DealTrack.Application.Services
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("ReassignClient", client.Id, "Client", ct);
+
+            await _notifications.CreateAsync(
+                Guid.Parse(dto.NewSalesUserId),
+                newSales.TenantId,
+                "Client Assigned to You",
+                $"Client '{client.Name}' has been assigned to you.",
+                NotificationType.ClientReassigned, ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientReassigned"]);
         }

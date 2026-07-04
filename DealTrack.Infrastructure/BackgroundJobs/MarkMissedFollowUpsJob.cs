@@ -1,4 +1,5 @@
 ﻿using DealTrack.Application.Interfaces;
+using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 
@@ -7,10 +8,12 @@ namespace DealTrack.Infrastructure.BackgroundJobs
     public class MarkMissedFollowUpsJob
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationService _notifications;
 
-        public MarkMissedFollowUpsJob(IUnitOfWork uow)
+        public MarkMissedFollowUpsJob(IUnitOfWork uow, INotificationService notifications)
         {
             _uow = uow;
+            _notifications = notifications;
         }
 
         public async Task ExecuteAsync()
@@ -23,6 +26,13 @@ namespace DealTrack.Infrastructure.BackgroundJobs
             {
                 followUp.MarkMissed();
                 await _uow.Write<FollowUp>().UpdateAsync(followUp);
+
+                await _notifications.CreateAsync(
+                    followUp.CreatedByUserId,
+                    followUp.TenantId,
+                    "Missed Follow-up",
+                    $"You missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd HH:mm}.",
+                    NotificationType.FollowUpReminder);
             }
 
             await _uow.SaveChangesAsync();
