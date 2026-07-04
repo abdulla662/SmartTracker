@@ -1,10 +1,12 @@
 ﻿using DealTrack.Application.Common;
+using DealTrack.Application.Contracts;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
 using DealTrack.Infrastructure.Persistence;
 using DealTrack.Infrastructure.Repositories;
 using DealTrack.Infrastructure.Services;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +35,7 @@ namespace DealTrack.Infrastructure.DependencyInjection
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IExcelExportService, ExcelExportService>();
             services.AddScoped<IExcelImportService, ExcelImportService>();
+            services.AddHttpClient<ISubscriptionService, SubscriptionService>();
             services.AddIdentity<ApplicationUser, IdentityRole>()
           .AddEntityFrameworkStores<AppDbContext>()
           .AddDefaultTokenProviders();
@@ -70,6 +73,22 @@ namespace DealTrack.Infrastructure.DependencyInjection
                 options.AddPolicy("ProOrEnterprise", policy =>
                     policy.RequireClaim("SubscriptionPlan", "Pro", "Enterprise"));
             });
+
+            services.AddMassTransit(x =>
+            {
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+                    {
+                        h.Username(configuration["RabbitMQ:Username"] ?? "guest");
+                        h.Password(configuration["RabbitMQ:Password"] ?? "guest");
+                    });
+
+                });
+            });
+
+            services.AddScoped<IOcrService, OcrService>();
+
             return services;
         }
     }

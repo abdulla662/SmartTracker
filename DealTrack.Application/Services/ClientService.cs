@@ -168,17 +168,44 @@ namespace DealTrack.Application.Services
                 return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
             }
 
+            // Get old Sales before reassign to notify their TeamLead
+            var oldSales = await _uow.Read<ApplicationUser>()
+                .GetSingleAsync(u => u.Id == client.AssignedToUserId, ct);
+
             client.Reassign(dto.NewSalesUserId, dto.NewTenantId);
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("ReassignClient", client.Id, "Client", ct);
 
+            // Notify the new Sales person
             await _notifications.CreateAsync(
                 Guid.Parse(dto.NewSalesUserId),
                 newSales.TenantId,
                 "Client Assigned to You",
                 $"Client '{client.Name}' has been assigned to you.",
                 NotificationType.ClientReassigned, ct);
+
+            // Notify the new TeamLead — Ahmed joined your team
+            if (newSales.TeamLeadId.HasValue)
+            {
+                await _notifications.CreateAsync(
+                    newSales.TeamLeadId.Value,
+                    newSales.TenantId,
+                    "New Member Joined Your Team",
+                    $"'{newSales.FullName}' has been added to your team by the admin.",
+                    NotificationType.NewMemberJoined, ct);
+            }
+
+            // Notify the old TeamLead — Ahmed left your team
+            if (oldSales?.TeamLeadId.HasValue == true && oldSales.TeamLeadId != newSales.TeamLeadId)
+            {
+                await _notifications.CreateAsync(
+                    oldSales.TeamLeadId.Value,
+                    oldSales.TenantId,
+                    "Team Member Left Your Team",
+                    $"'{oldSales.FullName}' has been transferred to another team by the admin.",
+                    NotificationType.ClientReassigned, ct);
+            }
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientReassigned"]);
         }

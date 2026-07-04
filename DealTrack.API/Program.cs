@@ -26,6 +26,7 @@ builder.Host.UseSerilog();
 // Controllers & Swagger
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<DealTrack.API.Services.OcrPythonHostedService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
