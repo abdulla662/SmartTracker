@@ -6,5 +6,6 @@ namespace DealTrack.Application.Contracts
         public string ClientId { get; set; } = string.Empty;
         public bool Success { get; set; }
         public string? ErrorMessage { get; set; }
+        public int ImportedCount { get; set; }
     }
 }
