@@ -109,6 +109,15 @@ builder.Services.AddHangfire(config => config
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<MarkMissedFollowUpsJob>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDev", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials());
+});
+
 var app = builder.Build();
 
 // Pipeline
@@ -128,6 +137,7 @@ app.UseRequestLocalization(options =>
 });
 
 app.UseHttpsRedirection();
+app.UseCors("FrontendDev");
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseRateLimiter();
 app.UseAuthentication();
@@ -153,5 +163,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<NotificationHub>("/hubs/notifications").RequireCors("FrontendDev");
 app.Run();
