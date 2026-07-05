@@ -18,6 +18,12 @@ namespace DealTrack.API.Controllers
             _followUpService = followUpService;
         }
 
+        [HttpGet]
+        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetAll(CancellationToken ct)
+        {
+            return await _followUpService.GetAllFollowUpsAsync(ct);
+        }
+
         [HttpGet("client/{clientId:guid}")]
         public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetForClient(
             Guid clientId, CancellationToken ct)

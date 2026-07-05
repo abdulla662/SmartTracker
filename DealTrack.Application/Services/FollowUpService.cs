@@ -27,6 +27,30 @@ namespace DealTrack.Application.Services
             _activityLog = activityLog;
         }
 
+        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetAllFollowUpsAsync(CancellationToken ct = default)
+        {
+            var userId = _currentUser.UserId;
+            var tenantId = _currentUser.TenantId;
+            var role = _currentUser.Role;
+
+            var clients = await _uow.Read<Client>().ListAsync(c =>
+                role == DealTrack.Domain.Enums.UserRole.Admin ||
+                (role == DealTrack.Domain.Enums.UserRole.TeamLead && c.TenantId == tenantId) ||
+                (role == DealTrack.Domain.Enums.UserRole.Sales && c.AssignedToUserId == userId), ct);
+
+            var clientMap = clients.ToDictionary(c => c.Id, c => c.Name);
+            var clientIds = clients.Select(c => c.Id).ToHashSet();
+
+            var followUps = await _uow.Read<FollowUp>().ListAsync(f => clientIds.Contains(f.ClientId), ct);
+
+            var dtos = followUps
+                .OrderBy(f => f.FollowUpDate)
+                .Select(f => { var dto = _mapper.Map<FollowUpResponseDto>(f); dto.ClientName = clientMap.GetValueOrDefault(f.ClientId, ""); return dto; })
+                .ToList();
+
+            return ApiResponseT<List<FollowUpResponseDto>>.SuccessResponse(dtos);
+        }
+
         public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetFollowUpsForClientAsync(Guid clientId, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
