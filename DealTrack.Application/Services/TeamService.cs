@@ -61,6 +61,18 @@ namespace DealTrack.Application.Services
 
             return ApiResponseT<TeamsResponseDto>.SuccessResponse(result);
         }
+        public async Task<ApiResponseT<bool>> RemoveMemberAsync(string userId, CancellationToken ct)
+        {
+            var tenantId = _currentUser.TenantId;
+            var user = await _uow.Read<ApplicationUser>().GetByIdAsync(userId, ct);
+            if (user is null || user.TenantId != tenantId)
+                return ApiResponseT<bool>.FailureResponse("Member not found.");
+            user.TeamLeadId = null;
+            await _uow.Write<ApplicationUser>().UpdateAsync(user, ct);
+            await _uow.SaveChangesAsync();
+            return ApiResponseT<bool>.SuccessResponse(true);
+        }
+
         public async Task<ApiResponseT<List<TeamMemberDto>>> GetMyTeamAsync(CancellationToken ct)
         {
             var currentUserId = Guid.Parse(_currentUser.UserId);

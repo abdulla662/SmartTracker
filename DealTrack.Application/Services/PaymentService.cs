@@ -27,6 +27,31 @@ namespace DealTrack.Application.Services
             _activityLog = activityLog;
         }
 
+        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetAllPaymentsAsync(CancellationToken ct = default)
+        {
+            var tenantId = _currentUser.TenantId;
+            var payments = await _uow.Read<Payment>().ListAsync(p => p.TenantId == tenantId, ct);
+
+            var clientIds = payments.Select(p => p.ClientId).Distinct().ToList();
+            var clients = new Dictionary<Guid, string>();
+            foreach (var cid in clientIds)
+            {
+                var c = await _uow.Read<Client>().GetByIdAsync(cid, ct);
+                if (c is not null) clients[cid] = c.Name;
+            }
+
+            var dtos = payments
+                .OrderByDescending(p => p.PaymentDate)
+                .Select(p => {
+                    var dto = _mapper.Map<PaymentResponseDto>(p);
+                    dto.ClientName = clients.TryGetValue(p.ClientId, out var name) ? name : string.Empty;
+                    return dto;
+                })
+                .ToList();
+
+            return ApiResponseT<List<PaymentResponseDto>>.SuccessResponse(dtos);
+        }
+
         public async Task<ApiResponseT<List<PaymentResponseDto>>> GetPaymentsForClientAsync(Guid clientId, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);

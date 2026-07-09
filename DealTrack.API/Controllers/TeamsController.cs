@@ -28,5 +28,10 @@ namespace DealTrack.API.Controllers
         [Authorize(Roles = "TeamLead")]
         public async Task<ApiResponseT<List<TeamMemberDto>>> GetMyTeam(CancellationToken ct)
             => await _teamService.GetMyTeamAsync(ct);
+
+        [HttpDelete("{userId}")]
+        [Authorize(Roles = "Admin,TeamLead")]
+        public async Task<ApiResponseT<bool>> RemoveMember(string userId, CancellationToken ct)
+            => await _teamService.RemoveMemberAsync(userId, ct);
     }
 }

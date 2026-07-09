@@ -18,6 +18,10 @@ namespace DealTrack.API.Controllers
             _paymentService = paymentService;
         }
 
+        [HttpGet]
+        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetAll(CancellationToken ct)
+            => await _paymentService.GetAllPaymentsAsync(ct);
+
         [HttpGet("client/{clientId:guid}")]
         public async Task<ApiResponseT<List<PaymentResponseDto>>> GetForClient(
             Guid clientId, CancellationToken ct)

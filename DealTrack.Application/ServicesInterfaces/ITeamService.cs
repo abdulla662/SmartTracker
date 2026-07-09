@@ -7,5 +7,6 @@ namespace DealTrack.Application.ServicesInterfaces
     {
         Task<ApiResponseT<TeamsResponseDto>> GetAllTeamsAsync(CancellationToken ct);
         Task<ApiResponseT<List<TeamMemberDto>>> GetMyTeamAsync(CancellationToken ct);
+        Task<ApiResponseT<bool>> RemoveMemberAsync(string userId, CancellationToken ct);
     }
 }

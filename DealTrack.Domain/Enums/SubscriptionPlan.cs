@@ -1,9 +1,10 @@
-﻿namespace DealTrack.Domain.Enums
+namespace DealTrack.Domain.Enums
 {
     public enum SubscriptionPlan
     {
         Free = 0,
-        Pro = 1,
-        Enterprise = 2
+        Advanced = 1,
+        Pro = 2,
+        Enterprise = 3
     }
 }

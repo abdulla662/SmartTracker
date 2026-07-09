@@ -50,6 +50,7 @@ namespace DealTrack.Application.Services
             user.FullName = dto.FullName;
             user.Email = dto.Email;
             user.UserName = dto.Email;
+            if (dto.Phone != null) user.PhoneNumber = dto.Phone;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)

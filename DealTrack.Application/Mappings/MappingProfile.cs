@@ -14,7 +14,8 @@ namespace DealTrack.Application.Mappings
         {
             CreateMap<ApplicationUser, GetProfileDto>()
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
-                .ForMember(dest => dest.SubscriptionPlan, opt => opt.MapFrom(src => src.SubscriptionPlan.ToString()));
+                .ForMember(dest => dest.SubscriptionPlan, opt => opt.MapFrom(src => src.SubscriptionPlan.ToString()))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.PhoneNumber));
 
             CreateMap<Client, ClientResponseDto>();
 

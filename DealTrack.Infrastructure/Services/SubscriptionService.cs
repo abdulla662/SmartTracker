@@ -26,8 +26,9 @@ namespace DealTrack.Infrastructure.Services
 
         private static readonly Dictionary<string, (int AmountCents, SubscriptionPlan Plan)> Plans = new()
         {
-            { "Pro",        (50000,  SubscriptionPlan.Pro) },
-            { "Enterprise", (150000, SubscriptionPlan.Enterprise) }
+            { "Advanced",   (9900,   SubscriptionPlan.Advanced) },
+            { "Pro",        (29900,  SubscriptionPlan.Pro) },
+            { "Enterprise", (99900,  SubscriptionPlan.Enterprise) },
         };
 
         public SubscriptionService(IUnitOfWork uow, ICurrentUserService currentUser, IConfiguration config, HttpClient http)
