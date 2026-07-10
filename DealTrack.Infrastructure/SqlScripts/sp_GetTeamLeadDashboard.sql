@@ -17,7 +17,7 @@ BEGIN
     INSERT INTO #TeamUserIds
     SELECT Id, TRY_CAST(Id AS UNIQUEIDENTIFIER), FullName
     FROM ApplicationUsers
-    WHERE IsDeleted=0 AND TenantId=@TenantId
+    WHERE TenantId=@TenantId
       AND (Id=@UserId OR TeamLeadId=@UserGuid);
 
     -- ── RS1: Summary scalars ───────────────────────────────────────────────
@@ -113,7 +113,7 @@ BEGIN
     -- ── RS4: Team member performance ──────────────────────────────────────
     SELECT
         t.FullName                                                      AS MemberName,
-        ISNULL((SELECT Role FROM ApplicationUsers WHERE Id=t.UserId AND IsDeleted=0), 3) AS RoleId,
+        ISNULL((SELECT Role FROM ApplicationUsers WHERE Id=t.UserId), 3) AS RoleId,
         (SELECT COUNT(*) FROM Clients cl
             WHERE cl.IsDeleted=0 AND cl.TenantId=@TenantId AND cl.AssignedToUserId=t.UserId
         )                                                               AS ClientsCount,

@@ -104,6 +104,6 @@ BEGIN
               AND f4.CreatedByUserId=TRY_CAST(u.Id AS UNIQUEIDENTIFIER) AND f4.Status='Missed'
         )                                                              AS FollowUpsOverdue
     FROM ApplicationUsers u
-    WHERE u.IsDeleted=0 AND u.TenantId=@TenantId AND u.Role IN (2, 3)
+    WHERE u.TenantId=@TenantId AND u.Role IN (2, 3)
     ORDER BY Revenue DESC;
 END

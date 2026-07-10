@@ -3,6 +3,7 @@ using DealTrack.Application.DTOs.Payments;
 using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace DealTrack.API.Controllers
 {
@@ -47,5 +48,13 @@ namespace DealTrack.API.Controllers
         {
             return await _paymentService.UpdatePaymentAsync(id, dto, ct);
         }
+
+        [HttpGet("summaries")]
+        public async Task<ApiResponseT<List<ClientPaymentSummaryDto>>> GetClientSummaries(CancellationToken ct)
+            => await _paymentService.GetClientSummariesAsync(ct);
+
+        [HttpPut("client/{clientId:guid}/deal-amount")]
+        public async Task<ApiResponse> SetDealAmount(Guid clientId, [FromBody] SetDealAmountDto dto, CancellationToken ct)
+            => await _paymentService.SetDealAmountAsync(clientId, dto.TotalDealAmount, ct);
     }
 }

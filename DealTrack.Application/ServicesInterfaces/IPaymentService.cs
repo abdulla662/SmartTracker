@@ -10,5 +10,7 @@ namespace DealTrack.Application.ServicesInterfaces
         Task<ApiResponseT<PaymentResponseDto>> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default);
         Task<ApiResponse> DeletePaymentAsync(Guid id, CancellationToken ct = default);
         Task<ApiResponse> UpdatePaymentAsync(Guid id, UpdatePaymentDto dto, CancellationToken ct);
+        Task<ApiResponseT<List<ClientPaymentSummaryDto>>> GetClientSummariesAsync(CancellationToken ct = default);
+        Task<ApiResponse> SetDealAmountAsync(Guid clientId, decimal totalDealAmount, CancellationToken ct = default);
     }
 }

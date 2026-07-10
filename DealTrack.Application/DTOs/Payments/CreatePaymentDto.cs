@@ -11,5 +11,8 @@ namespace DealTrack.Application.DTOs.Payments
         public decimal Amount { get; set; }
 
         public string? Notes { get; set; }
+
+        // Optional: set or update the total deal amount for this client
+        public decimal? TotalDealAmount { get; set; }
     }
 }
