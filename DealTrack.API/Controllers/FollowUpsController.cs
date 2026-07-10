@@ -19,16 +19,17 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetAll(CancellationToken ct)
+        public async Task<ApiResponseT<PagedResult<FollowUpResponseDto>>> GetAll(
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
         {
-            return await _followUpService.GetAllFollowUpsAsync(ct);
+            return await _followUpService.GetAllFollowUpsAsync(page, pageSize, ct);
         }
 
         [HttpGet("client/{clientId:guid}")]
-        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetForClient(
-            Guid clientId, CancellationToken ct)
+        public async Task<ApiResponseT<PagedResult<FollowUpResponseDto>>> GetForClient(
+            Guid clientId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
         {
-            return await _followUpService.GetFollowUpsForClientAsync(clientId, ct);
+            return await _followUpService.GetFollowUpsForClientAsync(clientId, page, pageSize, ct);
         }
 
         [HttpPost]

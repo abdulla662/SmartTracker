@@ -73,6 +73,8 @@ namespace DealTrack.Infrastructure.DependencyInjection
             {
                 options.AddPolicy("ProOrEnterprise", policy =>
                     policy.RequireClaim("SubscriptionPlan", "Pro", "Enterprise"));
+                options.AddPolicy("AdvancedOrHigher", policy =>
+                    policy.RequireClaim("SubscriptionPlan", "Advanced", "Pro", "Enterprise"));
             });
 
             services.AddMassTransit(x =>

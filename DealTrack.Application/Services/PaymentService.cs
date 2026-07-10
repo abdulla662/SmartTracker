@@ -27,7 +27,7 @@ namespace DealTrack.Application.Services
             _activityLog = activityLog;
         }
 
-        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetAllPaymentsAsync(CancellationToken ct = default)
+        public async Task<ApiResponseT<PagedResult<PaymentResponseDto>>> GetAllPaymentsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var tenantId = _currentUser.TenantId;
             var payments = await _uow.Read<Payment>().ListAsync(p => p.TenantId == tenantId, ct);
@@ -40,8 +40,11 @@ namespace DealTrack.Application.Services
                 if (c is not null) clients[cid] = c.Name;
             }
 
-            var dtos = payments
-                .OrderByDescending(p => p.PaymentDate)
+            var ordered = payments.OrderByDescending(p => p.PaymentDate).ToList();
+            var totalCount = ordered.Count;
+            var items = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => {
                     var dto = _mapper.Map<PaymentResponseDto>(p);
                     dto.ClientName = clients.TryGetValue(p.ClientId, out var name) ? name : string.Empty;
@@ -49,23 +52,28 @@ namespace DealTrack.Application.Services
                 })
                 .ToList();
 
-            return ApiResponseT<List<PaymentResponseDto>>.SuccessResponse(dtos);
+            return ApiResponseT<PagedResult<PaymentResponseDto>>.SuccessResponse(
+                new PagedResult<PaymentResponseDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize });
         }
 
-        public async Task<ApiResponseT<List<PaymentResponseDto>>> GetPaymentsForClientAsync(Guid clientId, CancellationToken ct = default)
+        public async Task<ApiResponseT<PagedResult<PaymentResponseDto>>> GetPaymentsForClientAsync(Guid clientId, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
             if (client is null)
-                return ApiResponseT<List<PaymentResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<PagedResult<PaymentResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == clientId, ct);
 
-            var dtos = payments
-                .OrderByDescending(p => p.PaymentDate)
+            var ordered = payments.OrderByDescending(p => p.PaymentDate).ToList();
+            var totalCount = ordered.Count;
+            var items = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => { var dto = _mapper.Map<PaymentResponseDto>(p); dto.ClientName = client.Name; return dto; })
                 .ToList();
 
-            return ApiResponseT<List<PaymentResponseDto>>.SuccessResponse(dtos);
+            return ApiResponseT<PagedResult<PaymentResponseDto>>.SuccessResponse(
+                new PagedResult<PaymentResponseDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize });
         }
 
         public async Task<ApiResponseT<PaymentResponseDto>> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default)

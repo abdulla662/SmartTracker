@@ -44,10 +44,16 @@ namespace DealTrack.API.Controllers
             var hmac = query["hmac"].ToString();
 
             if (success != "true" || string.IsNullOrEmpty(merchantOrderId))
-                return Ok("Payment not successful.");
+                return Redirect($"/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}");
 
             var result = await _subscriptionService.HandleWebhookGetAsync(merchantOrderId, hmac, ct);
-            return Ok(result);
+
+            var activated = result?.Success == true;
+            var redirectUrl = activated
+                ? $"/payment/callback?success=true&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}"
+                : $"/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}";
+
+            return Redirect(redirectUrl);
         }
     }
 }

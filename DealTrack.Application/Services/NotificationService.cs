@@ -41,15 +41,18 @@ namespace DealTrack.Application.Services
             }, ct);
         }
 
-        public async Task<ApiResponseT<List<NotificationResponseDto>>> GetMyNotificationsAsync(CancellationToken ct)
+        public async Task<ApiResponseT<PagedResult<NotificationResponseDto>>> GetMyNotificationsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var userId = Guid.Parse(_currentUser.UserId);
 
             var notifications = await _uow.Read<Notification>()
                 .ListAsync(n => n.UserId == userId, ct);
 
-            var dtos = notifications
-                .OrderByDescending(n => n.CreatedAt)
+            var ordered = notifications.OrderByDescending(n => n.CreatedAt).ToList();
+            var totalCount = ordered.Count;
+            var items = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(n => new NotificationResponseDto
                 {
                     Id = n.Id,
@@ -60,7 +63,8 @@ namespace DealTrack.Application.Services
                     CreatedAt = n.CreatedAt
                 }).ToList();
 
-            return ApiResponseT<List<NotificationResponseDto>>.SuccessResponse(dtos);
+            return ApiResponseT<PagedResult<NotificationResponseDto>>.SuccessResponse(
+                new PagedResult<NotificationResponseDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize });
         }
 
         public async Task<ApiResponse> MarkAsReadAsync(Guid id, CancellationToken ct)

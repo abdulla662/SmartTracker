@@ -27,7 +27,7 @@ namespace DealTrack.Application.Services
             _activityLog = activityLog;
         }
 
-        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetAllFollowUpsAsync(CancellationToken ct = default)
+        public async Task<ApiResponseT<PagedResult<FollowUpResponseDto>>> GetAllFollowUpsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var userId = _currentUser.UserId;
             var tenantId = _currentUser.TenantId;
@@ -43,28 +43,36 @@ namespace DealTrack.Application.Services
 
             var followUps = await _uow.Read<FollowUp>().ListAsync(f => clientIds.Contains(f.ClientId), ct);
 
-            var dtos = followUps
-                .OrderBy(f => f.FollowUpDate)
+            var ordered = followUps.OrderBy(f => f.FollowUpDate).ToList();
+            var totalCount = ordered.Count;
+            var items = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(f => { var dto = _mapper.Map<FollowUpResponseDto>(f); dto.ClientName = clientMap.GetValueOrDefault(f.ClientId, ""); return dto; })
                 .ToList();
 
-            return ApiResponseT<List<FollowUpResponseDto>>.SuccessResponse(dtos);
+            return ApiResponseT<PagedResult<FollowUpResponseDto>>.SuccessResponse(
+                new PagedResult<FollowUpResponseDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize });
         }
 
-        public async Task<ApiResponseT<List<FollowUpResponseDto>>> GetFollowUpsForClientAsync(Guid clientId, CancellationToken ct = default)
+        public async Task<ApiResponseT<PagedResult<FollowUpResponseDto>>> GetFollowUpsForClientAsync(Guid clientId, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var client = await _uow.Read<Client>().GetByIdAsync(clientId, ct);
             if (client is null)
-                return ApiResponseT<List<FollowUpResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
+                return ApiResponseT<PagedResult<FollowUpResponseDto>>.FailureResponse(_localizer["ClientNotFound"], HttpStatusCode.NotFound);
 
             var followUps = await _uow.Read<FollowUp>().ListAsync(f => f.ClientId == clientId, ct);
 
-            var dtos = followUps
-                .OrderBy(f => f.FollowUpDate)
+            var ordered = followUps.OrderBy(f => f.FollowUpDate).ToList();
+            var totalCount = ordered.Count;
+            var items = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(f => { var dto = _mapper.Map<FollowUpResponseDto>(f); dto.ClientName = client.Name; return dto; })
                 .ToList();
 
-            return ApiResponseT<List<FollowUpResponseDto>>.SuccessResponse(dtos);
+            return ApiResponseT<PagedResult<FollowUpResponseDto>>.SuccessResponse(
+                new PagedResult<FollowUpResponseDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize });
         }
 
         public async Task<ApiResponseT<FollowUpResponseDto>> CreateFollowUpAsync(CreateFollowUpDto dto, CancellationToken ct = default)
@@ -132,6 +140,9 @@ namespace DealTrack.Application.Services
                 return ApiResponse.FailureResponse(_localizer["FollowUpNotFound"], HttpStatusCode.NotFound);
 
             followUp.UpdateNotes(dto.Notes);
+            followUp.UpdateDate(dto.FollowUpDate);
+            if (dto.Status.HasValue)
+                followUp.ChangeStatus(dto.Status.Value);
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdateFollowUp", followUp.Id, "FollowUp", ct);

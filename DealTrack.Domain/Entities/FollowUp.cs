@@ -44,5 +44,17 @@ namespace DealTrack.Domain.Entities
             Notes = notes;
             MarkUpdated();
         }
+
+        public void UpdateDate(DateTime date)
+        {
+            FollowUpDate = date;
+            MarkUpdated();
+        }
+
+        public void ChangeStatus(FollowUpStatus status)
+        {
+            Status = status;
+            MarkUpdated();
+        }
     }
 }

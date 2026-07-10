@@ -3,6 +3,7 @@ using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System.IO.Compression;
 
@@ -28,16 +29,13 @@ namespace DealTrack.Infrastructure.Services
         {
             var result = new ImportResultDto();
 
-            // Layer 1: Extension
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext != ".xlsx")
                 throw new InvalidOperationException("Only .xlsx files are allowed.");
 
-            // Layer 2: File size
             if (file.Length > MaxFileSize)
-                throw new InvalidOperationException("File size exceeds the 5MB limit.");
+                throw new InvalidOperationException("File size exceeds the 5 MB limit.");
 
-            // Layer 3 + 4 + 5: Read into memory, validate bytes + ZIP contents
             using var memStream = new MemoryStream();
             await file.CopyToAsync(memStream, ct);
             memStream.Position = 0;
@@ -47,62 +45,138 @@ namespace DealTrack.Infrastructure.Services
             ValidateZipContents(memStream);
             memStream.Position = 0;
 
-            // Layer 6-9: Parse and validate data
             using var workbook = new XLWorkbook(memStream);
             var sheet = workbook.Worksheets.First();
-            var rows = sheet.RowsUsed().Skip(1).ToList();
+            var rows  = sheet.RowsUsed().Skip(1).ToList();
 
             if (rows.Count > MaxRows)
                 throw new InvalidOperationException($"File exceeds the maximum of {MaxRows} rows.");
 
-            var tenantId = _currentUser.TenantId;
-            var userId = _currentUser.UserId;
+            var tenantId      = _currentUser.TenantId;
+            var userId        = _currentUser.UserId;
+            var userGuid      = Guid.Parse(userId);
+            var role          = _currentUser.Role;
 
+            // Pre-load existing phones to detect duplicates
             var existingPhones = (await _uow.Read<Client>()
                 .ListAsync(c => c.TenantId == tenantId, ct))
                 .Select(c => c.Phone)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var seenPhonesInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seenInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Pre-load team members for TeamLead (email → userId lookup)
+            Dictionary<string, string>? teamMembersByEmail = null;
+            if (role == UserRole.TeamLead)
+            {
+                var members = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.TeamLeadId == userGuid && u.TenantId == tenantId, ct);
+                teamMembersByEmail = members
+                    .ToDictionary(u => u.Email!.ToLowerInvariant(), u => u.Id);
+            }
+
+            // Pre-load all tenant users for Admin (email → user lookup)
+            Dictionary<string, ApplicationUser>? tenantUsersByEmail = null;
+            if (role == UserRole.Admin)
+            {
+                var tenantUsers = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.TenantId == tenantId, ct);
+                tenantUsersByEmail = tenantUsers
+                    .ToDictionary(u => u.Email!.ToLowerInvariant(), u => u);
+            }
 
             foreach (var row in rows)
             {
-                var rowNumber = row.RowNumber();
+                var rowNum = row.RowNumber();
 
-                var name  = SanitizeCell(row.Cell(1).GetString(), rowNumber, "Name",  result);
-                var phone = SanitizeCell(row.Cell(2).GetString(), rowNumber, "Phone", result);
+                var name  = SanitizeCell(row.Cell(1).GetString(), rowNum, "Name",  result);
+                var phone = SanitizeCell(row.Cell(2).GetString(), rowNum, "Phone", result);
                 var notes = row.Cell(3).GetString().Trim();
 
-                if (name is null || phone is null)
-                {
-                    result.Skipped++;
-                    continue;
-                }
+                if (name is null || phone is null) { result.Skipped++; continue; }
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    result.Errors.Add($"Row {rowNumber}: Name is required.");
-                    result.Skipped++;
-                    continue;
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name ?? "", Reason = "Name is required." });
+                    result.Skipped++; continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(phone))
                 {
-                    result.Errors.Add($"Row {rowNumber}: Phone is required.");
-                    result.Skipped++;
-                    continue;
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = "Phone is required." });
+                    result.Skipped++; continue;
                 }
 
-                if (existingPhones.Contains(phone) || seenPhonesInFile.Contains(phone))
+                if (existingPhones.Contains(phone) || seenInFile.Contains(phone))
                 {
-                    result.Errors.Add($"Row {rowNumber}: Phone '{phone}' already exists.");
-                    result.Skipped++;
-                    continue;
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"Phone '{phone}' already exists — duplicate skipped." });
+                    result.Skipped++; continue;
                 }
 
-                seenPhonesInFile.Add(phone);
+                // Determine who to assign this client to
+                string assignedToUserId = userId;
 
-                var client = new Client(tenantId, name, phone, notes, userId);
+                if (role == UserRole.TeamLead)
+                {
+                    // Column D (optional): email of a sales member in this team
+                    var assignEmail = row.Cell(4).GetString().Trim().ToLowerInvariant();
+                    if (!string.IsNullOrWhiteSpace(assignEmail))
+                    {
+                        if (teamMembersByEmail!.TryGetValue(assignEmail, out var memberId))
+                        {
+                            assignedToUserId = memberId;
+                        }
+                        else
+                        {
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"'{assignEmail}' is not a sales member in your team." });
+                            result.Skipped++; continue;
+                        }
+                    }
+                }
+                else if (role == UserRole.Admin)
+                {
+                    // Column D (optional): TeamLead email
+                    // Column E (optional): Sales email
+                    var teamLeadEmail = row.Cell(4).GetString().Trim().ToLowerInvariant();
+                    var salesEmail    = row.Cell(5).GetString().Trim().ToLowerInvariant();
+
+                    ApplicationUser? teamLeadUser = null;
+                    ApplicationUser? salesUser    = null;
+
+                    if (!string.IsNullOrWhiteSpace(teamLeadEmail))
+                    {
+                        if (!tenantUsersByEmail!.TryGetValue(teamLeadEmail, out teamLeadUser) || teamLeadUser.Role != UserRole.TeamLead)
+                        {
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"TeamLead '{teamLeadEmail}' not found in your tenant." });
+                            result.Skipped++; continue;
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(salesEmail))
+                    {
+                        if (!tenantUsersByEmail!.TryGetValue(salesEmail, out salesUser) || salesUser.Role != UserRole.Sales)
+                        {
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"Sales user '{salesEmail}' not found in your tenant." });
+                            result.Skipped++; continue;
+                        }
+
+                        // If both specified, Sales must be under that TeamLead
+                        if (teamLeadUser != null && salesUser.TeamLeadId != Guid.Parse(teamLeadUser.Id))
+                        {
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"'{salesEmail}' is not a member of TeamLead '{teamLeadEmail}'." });
+                            result.Skipped++; continue;
+                        }
+
+                        assignedToUserId = salesUser.Id;
+                    }
+                    else if (teamLeadUser != null)
+                    {
+                        assignedToUserId = teamLeadUser.Id;
+                    }
+                }
+
+                seenInFile.Add(phone);
+                var client = new Client(tenantId, name, phone, notes, assignedToUserId);
                 await _uow.Write<Client>().AddAsync(client, ct);
                 result.Imported++;
             }
@@ -118,44 +192,33 @@ namespace DealTrack.Infrastructure.Services
             var buffer = new byte[4];
             var read = stream.Read(buffer, 0, 4);
             if (read < 4 || !buffer.SequenceEqual(XlsxMagicBytes))
-                throw new InvalidOperationException("File is not a valid Excel file.");
+                throw new InvalidOperationException("File is not a valid Excel (.xlsx) file.");
         }
 
         private static void ValidateZipContents(Stream stream)
         {
             using var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
-
-            var forbiddenEntries = new[] { "vbaProject.bin", "activeX", "externalLinks" };
-
+            var forbidden = new[] { "vbaProject.bin", "activeX", "externalLinks" };
             foreach (var entry in zip.Entries)
-            {
-                foreach (var forbidden in forbiddenEntries)
-                {
-                    if (entry.FullName.Contains(forbidden, StringComparison.OrdinalIgnoreCase))
-                        throw new InvalidOperationException(
-                            $"File contains forbidden content: {forbidden}. Upload rejected for security reasons.");
-                }
-            }
+                foreach (var f in forbidden)
+                    if (entry.FullName.Contains(f, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException($"File contains forbidden content: {f}.");
         }
 
         private static string? SanitizeCell(string raw, int row, string field, ImportResultDto result)
         {
             var value = raw.Trim();
+            if (string.IsNullOrEmpty(value)) return value;
 
-            if (string.IsNullOrEmpty(value))
-                return value;
-
-            // Layer 6: Formula injection prevention
             if (ForbiddenFirstChars.Contains(value[0]))
             {
-                result.Errors.Add($"Row {row}: {field} contains forbidden characters (formula injection attempt).");
+                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = $"{field} contains forbidden characters (formula injection)." });
                 return null;
             }
 
-            // Layer 7: Max length
             if (value.Length > 200)
             {
-                result.Errors.Add($"Row {row}: {field} exceeds maximum length of 200 characters.");
+                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = $"{field} exceeds 200 characters." });
                 return null;
             }
 

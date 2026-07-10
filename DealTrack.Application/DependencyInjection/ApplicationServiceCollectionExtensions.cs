@@ -15,7 +15,7 @@ namespace DealTrack.Application.DependencyInjection
             services.AddScoped<IClientService, ClientService>();
             services.AddScoped<IFollowUpService, FollowUpService>();
             services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IDashboardService, DashboardService>();
+            // IDashboardService is registered in InfrastructureServiceCollectionExtensions
             services.AddScoped<IInviteService, InviteService>();
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<ITeamService, TeamService>();

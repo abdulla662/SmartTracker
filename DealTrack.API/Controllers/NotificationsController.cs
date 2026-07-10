@@ -19,8 +19,9 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ApiResponseT<List<NotificationResponseDto>>> GetMyNotifications(CancellationToken ct)
-            => await _notificationService.GetMyNotificationsAsync(ct);
+        public async Task<ApiResponseT<PagedResult<NotificationResponseDto>>> GetMyNotifications(
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+            => await _notificationService.GetMyNotificationsAsync(page, pageSize, ct);
 
         [HttpPut("{id:guid}/read")]
         public async Task<ApiResponse> MarkAsRead(Guid id, CancellationToken ct)
