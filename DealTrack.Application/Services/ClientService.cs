@@ -94,6 +94,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<Client>().AddAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("CreateClient", client.Id, "Client", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"added a new client ({dto.Name})", ct);
 
             return ApiResponseT<ClientResponseDto>.SuccessResponse(
                 _mapper.Map<ClientResponseDto>(client), _localizer["ClientCreated"], HttpStatusCode.Created);
@@ -112,6 +113,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdateClient", client.Id, "Client", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"updated client ({client.Name})", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientUpdated"]);
         }
@@ -125,9 +127,19 @@ namespace DealTrack.Application.Services
             if (!CanAccess(client))
                 return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
 
+            // Cascade soft-delete follow-ups and payments
+            var followUps = await _uow.Read<FollowUp>().ListAsync(f => f.ClientId == id, ct);
+            foreach (var f in followUps)
+                await _uow.SoftDelete<FollowUp>().SoftDeleteAsync(f, ct);
+
+            var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == id, ct);
+            foreach (var p in payments)
+                await _uow.SoftDelete<Payment>().SoftDeleteAsync(p, ct);
+
             await _uow.SoftDelete<Client>().SoftDeleteAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeleteClient", client.Id, "Client", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"deleted client ({client.Name})", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientDeleted"]);
         }

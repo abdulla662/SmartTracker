@@ -1,5 +1,6 @@
 using DealTrack.Application.Common;
 using DealTrack.Application.Contracts;
+using DealTrack.Application.DTOs.Ocr;
 using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ namespace DealTrack.API.Controllers
 
         [HttpPost("process")]
         [Consumes("multipart/form-data")]
-        public async Task<ApiResponseT<OcrCompleted>> ProcessImage(
+        public async Task<ApiResponseT<List<OcrClientDto>>> ProcessImage(
             [FromForm] ProcessImageRequest request,
             CancellationToken ct)
         {
@@ -42,6 +43,22 @@ namespace DealTrack.API.Controllers
             };
 
             return await _ocrService.ProcessImageAsync(ocrRequest, ct);
+        }
+
+        [HttpPost("save-clients")]
+        public async Task<ApiResponseT<int>> SaveClients(
+            [FromBody] SaveOcrClientsRequest request,
+            CancellationToken ct)
+        {
+            return await _ocrService.SaveClientsAsync(request.Clients, ct);
+        }
+
+        [HttpPost("check-phones")]
+        public async Task<ApiResponseT<List<string>>> CheckPhones(
+            [FromBody] CheckPhonesRequest request,
+            CancellationToken ct)
+        {
+            return await _ocrService.CheckExistingPhonesAsync(request.Phones, ct);
         }
     }
 }

@@ -27,16 +27,23 @@ namespace DealTrack.API.Services
                 return Task.CompletedTask;
             }
 
+            // Kill any stale python main.py processes from previous runs
+            if (OperatingSystem.IsWindows())
+                KillStaleOcrProcesses(scriptPath);
+
             _process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "python",
                     Arguments = $"\"{scriptPath}\"",
+                    WorkingDirectory = Path.GetDirectoryName(scriptPath)!, // needed so .env is found
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    CreateNoWindow = true
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8
                 }
             };
 
@@ -71,5 +78,39 @@ namespace DealTrack.API.Services
         }
 
         public void Dispose() => _process?.Dispose();
+
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+        private void KillStaleOcrProcesses(string scriptPath)
+        {
+            try
+            {
+                var scriptName = Path.GetFileName(scriptPath); // "main.py"
+                var stale = System.Diagnostics.Process.GetProcessesByName("python")
+                    .Where(p =>
+                    {
+                        try
+                        {
+                            var wmi = new System.Management.ManagementObjectSearcher(
+                                $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {p.Id}");
+                            foreach (System.Management.ManagementObject obj in wmi.Get())
+                                if (obj["CommandLine"]?.ToString()?.Contains(scriptName) == true)
+                                    return true;
+                        }
+                        catch { }
+                        return false;
+                    })
+                    .ToList();
+
+                foreach (var p in stale)
+                {
+                    try { p.Kill(entireProcessTree: true); } catch { }
+                    _logger.LogInformation("Killed stale OCR process (PID {Pid})", p.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Could not enumerate stale OCR processes: {Msg}", ex.Message);
+            }
+        }
     }
 }

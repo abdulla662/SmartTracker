@@ -5,6 +5,7 @@ using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
 
@@ -17,14 +18,16 @@ namespace DealTrack.Application.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
         private readonly IActivityLogService _activityLog;
+        private readonly INotificationService _notifications;
 
-        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
+        public FollowUpService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog, INotificationService notifications)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
             _activityLog = activityLog;
+            _notifications = notifications;
         }
 
         public async Task<ApiResponseT<PagedResult<FollowUpResponseDto>>> GetAllFollowUpsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
@@ -85,6 +88,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().AddAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("CreateFollowUp", followUp.Id, "FollowUp", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"created a follow-up for {client.Name} on {dto.FollowUpDate:yyyy-MM-dd}", ct);
 
             var result = _mapper.Map<FollowUpResponseDto>(followUp);
             result.ClientName = client.Name;
@@ -102,6 +106,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("MarkFollowUpDone", followUp.Id, "FollowUp", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "marked a follow-up as done", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedDone"]);
         }
@@ -117,6 +122,14 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("MarkFollowUpMissed", followUp.Id, "FollowUp", ct);
 
+            await _notifications.CreateAsync(
+                followUp.CreatedByUserId,
+                followUp.TenantId,
+                "Missed Follow-up",
+                $"You missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd HH:mm}.",
+                NotificationType.FollowUpReminder, ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd}", ct);
+
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedMissed"]);
         }
 
@@ -129,6 +142,7 @@ namespace DealTrack.Application.Services
             await _uow.SoftDelete<FollowUp>().SoftDeleteAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeleteFollowUp", followUp.Id, "FollowUp", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deleted a follow-up", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpDeleted"]);
         }
@@ -146,6 +160,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdateFollowUp", followUp.Id, "FollowUp", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "updated a follow-up", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpUpdated"]);
         }

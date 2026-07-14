@@ -86,4 +86,28 @@
     <data name="PasswordResetSent" xml:space="preserve"><value>إذا كان البريد موجوداً، سيتم إرسال رابط إعادة التعيين</value></data>
     <data name="PasswordResetSuccess" xml:space="preserve"><value>تم إعادة تعيين كلمة المرور بنجاح</value></data>
     <data name="InvalidResetToken" xml:space="preserve"><value>رمز إعادة التعيين غير صالح أو منتهي الصلاحية</value></data>
+
+    <!-- Import -->
+    <data name="ImportPlanLimitReached" xml:space="preserve"><value>تم الوصول للحد الأقصى في خطتك — لا يمكنك استيراد المزيد من العملاء في خطتك الحالية.</value></data>
+    <data name="ImportOnlyXlsx" xml:space="preserve"><value>يُسمح فقط بملفات .xlsx</value></data>
+    <data name="ImportFileTooLarge" xml:space="preserve"><value>حجم الملف يتجاوز الحد الأقصى البالغ 5 ميغابايت</value></data>
+    <data name="ImportTooManyRows" xml:space="preserve"><value>الملف يتجاوز الحد الأقصى البالغ {0} صف</value></data>
+    <data name="ImportNameRequired" xml:space="preserve"><value>الاسم مطلوب</value></data>
+    <data name="ImportPhoneRequired" xml:space="preserve"><value>رقم الهاتف مطلوب</value></data>
+    <data name="ImportPhoneDuplicate" xml:space="preserve"><value>رقم الهاتف '{0}' موجود بالفعل — تم تخطيه</value></data>
+    <data name="ImportNotSalesMember" xml:space="preserve"><value>'{0}' ليس عضواً في فريق المبيعات الخاص بك</value></data>
+    <data name="ImportTeamLeadNotFound" xml:space="preserve"><value>مدير الفريق '{0}' غير موجود في مؤسستك</value></data>
+    <data name="ImportSalesNotFound" xml:space="preserve"><value>مندوب المبيعات '{0}' غير موجود في مؤسستك</value></data>
+    <data name="ImportSalesNotUnderTeamLead" xml:space="preserve"><value>'{0}' ليس عضواً في فريق '{1}'</value></data>
+    <data name="FieldName" xml:space="preserve"><value>الاسم</value></data>
+    <data name="FieldPhone" xml:space="preserve"><value>الهاتف</value></data>
+    <data name="ImportFormulaInjection" xml:space="preserve"><value>حقل {0} يحتوي على أحرف محظورة</value></data>
+    <data name="ImportFieldTooLong" xml:space="preserve"><value>حقل {0} يتجاوز 200 حرف</value></data>
+    <data name="CompanyNameAlreadyExists" xml:space="preserve"><value>يوجد بالفعل شركة بهذا الاسم. يرجى استخدام اسم مختلف أو طلب دعوة من المدير.</value></data>
+    <data name="JoinRequestSent" xml:space="preserve"><value>تم إرسال طلب انضمامك إلى مدير الشركة. ستتلقى إشعاراً عند الموافقة.</value></data>
+    <data name="AccountPendingApproval" xml:space="preserve"><value>حسابك في انتظار موافقة مدير الشركة.</value></data>
+    <data name="JoinRequestAccepted" xml:space="preserve"><value>تم قبول طلب الانضمام بنجاح.</value></data>
+    <data name="JoinRequestRejected" xml:space="preserve"><value>تم رفض طلب الانضمام.</value></data>
+    <data name="JoinRequestNotFound" xml:space="preserve"><value>طلب الانضمام غير موجود.</value></data>
+    <data name="JoinRequestsRetrieved" xml:space="preserve"><value>تم استرجاع طلبات الانضمام بنجاح.</value></data>
 </root>

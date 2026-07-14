@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DealTrack.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/transfer-requests")]
     [Authorize(Roles = "TeamLead")]
     public class TransferRequestsController : ControllerBase
     {

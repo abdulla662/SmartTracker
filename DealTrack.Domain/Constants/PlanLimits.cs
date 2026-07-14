@@ -6,8 +6,10 @@ namespace DealTrack.Domain.Constants
     {
         public static int GetMaxClients(SubscriptionPlan plan) => plan switch
         {
-            SubscriptionPlan.Free => 10,
-            _ => int.MaxValue
+            SubscriptionPlan.Free     => 50,
+            SubscriptionPlan.Advanced => 500,
+            SubscriptionPlan.Pro      => 5000,
+            _                         => int.MaxValue   // Enterprise
         };
 
         public static int GetMaxSalesUnderTeamLead(SubscriptionPlan plan) => plan switch

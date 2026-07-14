@@ -36,7 +36,7 @@ namespace DealTrack.Infrastructure.Persistence
 
         public void ApplyFilter(RequestFilterContext ctx) => _filterContext = ctx;
 
-        public bool ApplySoftDeleteFilter => _filterContext?.ApplySoftDeleteFilter ?? false;
+        public bool ApplySoftDeleteFilter => _filterContext?.ApplySoftDeleteFilter ?? true;
 
         private Guid? CurrentTenantId
         {

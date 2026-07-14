@@ -4,8 +4,8 @@ using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -18,11 +18,13 @@ namespace DealTrack.Infrastructure.Services
         private readonly ICurrentUserService _currentUser;
         private readonly IConfiguration _config;
         private readonly HttpClient _http;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         private string ApiKey => _config["Paymob:ApiKey"]!;
         private string IntegrationId => _config["Paymob:IntegrationId"]!;
         private string IframeId => _config["Paymob:IframeId"]!;
         private string HmacSecret => _config["Paymob:HmacSecret"]!;
+        private string FrontendUrl => _config["AppSettings:FrontendUrl"] ?? "";
 
         private static readonly Dictionary<string, (int AmountCents, SubscriptionPlan Plan)> Plans = new()
         {
@@ -31,12 +33,13 @@ namespace DealTrack.Infrastructure.Services
             { "Enterprise", (99900,  SubscriptionPlan.Enterprise) },
         };
 
-        public SubscriptionService(IUnitOfWork uow, ICurrentUserService currentUser, IConfiguration config, HttpClient http)
+        public SubscriptionService(IUnitOfWork uow, ICurrentUserService currentUser, IConfiguration config, HttpClient http, UserManager<ApplicationUser> userManager)
         {
             _uow = uow;
             _currentUser = currentUser;
             _config = config;
             _http = http;
+            _userManager = userManager;
         }
 
         public async Task<ApiResponseT<InitiatePaymentResponseDto>> InitiatePaymentAsync(InitiatePaymentDto dto, CancellationToken ct)
@@ -92,14 +95,12 @@ namespace DealTrack.Infrastructure.Services
             if (!Plans.TryGetValue(planName, out var planInfo))
                 return ApiResponse.FailureResponse("Invalid plan in order.");
 
-            var user = await _uow.Read<ApplicationUser>()
-                .GetSingleAsync(u => u.Id == userId, ct);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
                 return ApiResponse.FailureResponse("User not found.");
 
             user.SubscriptionPlan = planInfo.Plan;
-            await _uow.Write<ApplicationUser>().UpdateAsync(user, ct);
-            await _uow.SaveChangesAsync();
+            await _userManager.UpdateAsync(user);
 
             return ApiResponse.SuccessResponse("Subscription upgraded successfully.");
         }
@@ -195,14 +196,12 @@ namespace DealTrack.Infrastructure.Services
             if (!Plans.TryGetValue(planName, out var planInfo))
                 return ApiResponse.FailureResponse("Invalid plan.");
 
-            var user = await _uow.Read<ApplicationUser>()
-                .GetSingleAsync(u => u.Id == userId, ct);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
                 return ApiResponse.FailureResponse("User not found.");
 
             user.SubscriptionPlan = planInfo.Plan;
-            await _uow.Write<ApplicationUser>().UpdateAsync(user, ct);
-            await _uow.SaveChangesAsync();
+            await _userManager.UpdateAsync(user);
 
             return ApiResponse.SuccessResponse("Subscription upgraded successfully.");
         }

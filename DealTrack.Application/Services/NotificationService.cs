@@ -7,6 +7,7 @@ using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
+using System.Threading;
 
 namespace DealTrack.Application.Services
 {
@@ -39,6 +40,51 @@ namespace DealTrack.Application.Services
                 isRead = notification.IsRead,
                 createdAt = notification.CreatedAt
             }, ct);
+        }
+
+        public async Task NotifyUpstreamAsync(string actorUserId, Guid tenantId, string actionDescription, CancellationToken ct = default)
+        {
+            var actor = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == actorUserId, ct);
+            if (actor == null) return;
+
+            var actorName = string.IsNullOrWhiteSpace(actor.FullName) ? actor.UserName : actor.FullName;
+
+            if (actor.Role == UserRole.Sales)
+            {
+                if (actor.TeamLeadId.HasValue)
+                {
+                    var tlId = actor.TeamLeadId.Value.ToString();
+                    var teamLead = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == tlId, ct);
+                    if (teamLead != null)
+                    {
+                        var tlName = string.IsNullOrWhiteSpace(teamLead.FullName) ? teamLead.UserName : teamLead.FullName;
+                        await CreateAsync(
+                            actor.TeamLeadId.Value,
+                            tenantId,
+                            "Team Member Activity",
+                            $"{actorName} (led by {tlName}) has {actionDescription}.",
+                            NotificationType.SystemNotification, ct);
+                    }
+                }
+                else
+                {
+                    // Sales without a team lead → notify admins directly
+                    var admins = await _uow.Read<ApplicationUser>()
+                        .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Admin, ct);
+                    foreach (var admin in admins)
+                        await CreateAsync(Guid.Parse(admin.Id), tenantId, "Team Member Activity",
+                            $"{actorName} has {actionDescription}.", NotificationType.SystemNotification, ct);
+                }
+            }
+            else if (actor.Role == UserRole.TeamLead)
+            {
+                var admins = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Admin, ct);
+                foreach (var admin in admins)
+                    await CreateAsync(Guid.Parse(admin.Id), tenantId, "Team Lead Activity",
+                        $"{actorName} (TeamLead) has {actionDescription}.", NotificationType.SystemNotification, ct);
+            }
+            // Admin role → no upstream to notify
         }
 
         public async Task<ApiResponseT<PagedResult<NotificationResponseDto>>> GetMyNotificationsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)

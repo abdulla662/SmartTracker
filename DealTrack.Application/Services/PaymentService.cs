@@ -5,6 +5,7 @@ using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
 
@@ -17,14 +18,16 @@ namespace DealTrack.Application.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IMapper _mapper;
         private readonly IActivityLogService _activityLog;
+        private readonly INotificationService _notifications;
 
-        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog)
+        public PaymentService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer, IMapper mapper, IActivityLogService activityLog, INotificationService notifications)
         {
             _uow = uow;
             _currentUser = currentUser;
             _localizer = localizer;
             _mapper = mapper;
             _activityLog = activityLog;
+            _notifications = notifications;
         }
 
         public async Task<ApiResponseT<PagedResult<PaymentResponseDto>>> GetAllPaymentsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
@@ -90,6 +93,14 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("CreatePayment", payment.Id, "Payment", ct);
 
+            await _notifications.CreateAsync(
+                Guid.Parse(_currentUser.UserId),
+                _currentUser.TenantId,
+                "Payment Recorded",
+                $"A payment of {dto.Amount:C} was recorded for {client.Name}.",
+                NotificationType.PaymentReminder, ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"recorded a payment of {dto.Amount:C} for {client.Name}", ct);
+
             var result = _mapper.Map<PaymentResponseDto>(payment);
             result.ClientName = client.Name;
 
@@ -115,18 +126,40 @@ namespace DealTrack.Application.Services
             var lastMap   = payments.GroupBy(p => p.ClientId)
                 .ToDictionary(g => g.Key, g => g.Max(p => p.PaymentDate));
 
+            // Recalculate paid fresh from payments (ClientFinancialSummary.PaidAmount can be stale)
+            var paidMap = payments.GroupBy(p => p.ClientId)
+                .ToDictionary(g => g.Key, g => g.Sum(p => p.Amount));
+
+            // Auto-heal any stale summaries silently
+            var stale = summaries.Where(s => paidMap.ContainsKey(s.ClientId) && s.PaidAmount != paidMap[s.ClientId]).ToList();
+            foreach (var s in stale)
+            {
+                s.RecalculatePaidAmount(paidMap[s.ClientId]);
+                await _uow.Write<ClientFinancialSummary>().UpdateAsync(s, ct);
+            }
+            if (stale.Any()) await _uow.SaveChangesAsync();
+
             var result = summaries
                 .Where(s => clientMap.ContainsKey(s.ClientId))
-                .Select(s => new ClientPaymentSummaryDto
+                .Select(s =>
                 {
-                    ClientId       = s.ClientId,
-                    ClientName     = clientMap[s.ClientId].Name,
-                    TotalAmount    = s.TotalAmount,
-                    PaidAmount     = s.PaidAmount,
-                    Remaining      = s.Remaining,
-                    Status         = s.Status.ToString(),
-                    PaymentCount   = countMap.GetValueOrDefault(s.ClientId, 0),
-                    LastPaymentDate = lastMap.TryGetValue(s.ClientId, out var d) ? d : null,
+                    var actualPaid = paidMap.GetValueOrDefault(s.ClientId, 0);
+                    var remaining  = s.TotalAmount > 0 ? s.TotalAmount - actualPaid : 0;
+                    var status     = s.TotalAmount <= 0  ? "Pending"
+                                   : actualPaid <= 0     ? "Pending"
+                                   : actualPaid >= s.TotalAmount ? "Paid"
+                                   : "PartiallyPaid";
+                    return new ClientPaymentSummaryDto
+                    {
+                        ClientId        = s.ClientId,
+                        ClientName      = clientMap[s.ClientId].Name,
+                        TotalAmount     = s.TotalAmount,
+                        PaidAmount      = actualPaid,
+                        Remaining       = remaining,
+                        Status          = status,
+                        PaymentCount    = countMap.GetValueOrDefault(s.ClientId, 0),
+                        LastPaymentDate = lastMap.TryGetValue(s.ClientId, out var d) ? d : null,
+                    };
                 })
                 .OrderByDescending(s => s.PaidAmount)
                 .ToList();
@@ -170,6 +203,7 @@ namespace DealTrack.Application.Services
 
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeletePayment", payment.Id, "Payment", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deleted a payment", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
         }
@@ -187,8 +221,23 @@ namespace DealTrack.Application.Services
 
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdatePayment", payment.Id, "Payment", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"updated a payment to {dto.Amount:C}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentUpdated"]);
+        }
+
+        public async Task<ApiResponse> DeleteClientSummaryAsync(Guid clientId, CancellationToken ct = default)
+        {
+            var payments = await _uow.Read<Payment>().ListAsync(p => p.ClientId == clientId, ct);
+            foreach (var p in payments)
+                await _uow.SoftDelete<Payment>().SoftDeleteAsync(p, ct);
+
+            var summary = await _uow.Read<ClientFinancialSummary>().GetSingleAsync(s => s.ClientId == clientId, ct);
+            if (summary is not null)
+                await _uow.Write<ClientFinancialSummary>().DeleteAsync(summary, ct);
+
+            await _uow.SaveChangesAsync();
+            return ApiResponse.SuccessResponse();
         }
 
         private async Task SyncFinancialSummaryAsync(Guid clientId, CancellationToken ct, Guid? excludePaymentId = null, decimal? dealAmount = null)

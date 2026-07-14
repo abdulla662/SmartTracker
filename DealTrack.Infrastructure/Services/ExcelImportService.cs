@@ -1,10 +1,13 @@
 using ClosedXML.Excel;
 using DealTrack.Application.DTOs.Clients;
 using DealTrack.Application.Interfaces;
+using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Constants;
 using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Localization;
 using System.IO.Compression;
 
 namespace DealTrack.Infrastructure.Services
@@ -13,16 +16,19 @@ namespace DealTrack.Infrastructure.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly ICurrentUserService _currentUser;
+        private readonly IStringLocalizer<SharedResource> _localizer;
 
         private const long MaxFileSize = 5 * 1024 * 1024;
         private const int MaxRows = 1000;
         private static readonly byte[] XlsxMagicBytes = [0x50, 0x4B, 0x03, 0x04];
-        private static readonly char[] ForbiddenFirstChars = ['=', '+', '-', '@', '\t', '\r'];
+        // Only block true formula starters — '+' and '-' are valid phone prefixes
+        private static readonly char[] ForbiddenFirstChars = ['=', '@', '\t', '\r'];
 
-        public ExcelImportService(IUnitOfWork uow, ICurrentUserService currentUser)
+        public ExcelImportService(IUnitOfWork uow, ICurrentUserService currentUser, IStringLocalizer<SharedResource> localizer)
         {
             _uow = uow;
             _currentUser = currentUser;
+            _localizer = localizer;
         }
 
         public async Task<ImportResultDto> ImportClientsAsync(IFormFile file, CancellationToken ct = default)
@@ -31,10 +37,10 @@ namespace DealTrack.Infrastructure.Services
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext != ".xlsx")
-                throw new InvalidOperationException("Only .xlsx files are allowed.");
+                throw new InvalidOperationException(_localizer["ImportOnlyXlsx"]);
 
             if (file.Length > MaxFileSize)
-                throw new InvalidOperationException("File size exceeds the 5 MB limit.");
+                throw new InvalidOperationException(_localizer["ImportFileTooLarge"]);
 
             using var memStream = new MemoryStream();
             await file.CopyToAsync(memStream, ct);
@@ -50,7 +56,7 @@ namespace DealTrack.Infrastructure.Services
             var rows  = sheet.RowsUsed().Skip(1).ToList();
 
             if (rows.Count > MaxRows)
-                throw new InvalidOperationException($"File exceeds the maximum of {MaxRows} rows.");
+                throw new InvalidOperationException(string.Format(_localizer["ImportTooManyRows"], MaxRows));
 
             var tenantId      = _currentUser.TenantId;
             var userId        = _currentUser.UserId;
@@ -58,10 +64,16 @@ namespace DealTrack.Infrastructure.Services
             var role          = _currentUser.Role;
 
             // Pre-load existing phones to detect duplicates
-            var existingPhones = (await _uow.Read<Client>()
-                .ListAsync(c => c.TenantId == tenantId, ct))
+            var existingClients = await _uow.Read<Client>()
+                .ListAsync(c => c.TenantId == tenantId, ct);
+            var existingPhones = existingClients
                 .Select(c => c.Phone)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // Plan limit: count clients assigned to this user specifically
+            var maxClients   = PlanLimits.GetMaxClients(_currentUser.SubscriptionPlan);
+            var currentCount = existingClients.Count(c => c.AssignedToUserId == userId);
+            var remaining    = maxClients == int.MaxValue ? int.MaxValue : maxClients - currentCount;
 
             var seenInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -89,27 +101,27 @@ namespace DealTrack.Infrastructure.Services
             {
                 var rowNum = row.RowNumber();
 
-                var name  = SanitizeCell(row.Cell(1).GetString(), rowNum, "Name",  result);
-                var phone = SanitizeCell(row.Cell(2).GetString(), rowNum, "Phone", result);
+                var name  = SanitizeCell(row.Cell(1).GetString(), rowNum, _localizer["FieldName"],  result);
+                var phone = SanitizeCell(row.Cell(2).GetString(), rowNum, _localizer["FieldPhone"], result);
                 var notes = row.Cell(3).GetString().Trim();
 
                 if (name is null || phone is null) { result.Skipped++; continue; }
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name ?? "", Reason = "Name is required." });
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name ?? "", Reason = _localizer["ImportNameRequired"] });
                     result.Skipped++; continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(phone))
                 {
-                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = "Phone is required." });
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = _localizer["ImportPhoneRequired"] });
                     result.Skipped++; continue;
                 }
 
                 if (existingPhones.Contains(phone) || seenInFile.Contains(phone))
                 {
-                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"Phone '{phone}' already exists — duplicate skipped." });
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = string.Format(_localizer["ImportPhoneDuplicate"], phone) });
                     result.Skipped++; continue;
                 }
 
@@ -128,7 +140,7 @@ namespace DealTrack.Infrastructure.Services
                         }
                         else
                         {
-                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"'{assignEmail}' is not a sales member in your team." });
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = string.Format(_localizer["ImportNotSalesMember"], assignEmail) });
                             result.Skipped++; continue;
                         }
                     }
@@ -147,7 +159,7 @@ namespace DealTrack.Infrastructure.Services
                     {
                         if (!tenantUsersByEmail!.TryGetValue(teamLeadEmail, out teamLeadUser) || teamLeadUser.Role != UserRole.TeamLead)
                         {
-                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"TeamLead '{teamLeadEmail}' not found in your tenant." });
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = string.Format(_localizer["ImportTeamLeadNotFound"], teamLeadEmail) });
                             result.Skipped++; continue;
                         }
                     }
@@ -156,14 +168,14 @@ namespace DealTrack.Infrastructure.Services
                     {
                         if (!tenantUsersByEmail!.TryGetValue(salesEmail, out salesUser) || salesUser.Role != UserRole.Sales)
                         {
-                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"Sales user '{salesEmail}' not found in your tenant." });
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = string.Format(_localizer["ImportSalesNotFound"], salesEmail) });
                             result.Skipped++; continue;
                         }
 
                         // If both specified, Sales must be under that TeamLead
                         if (teamLeadUser != null && salesUser.TeamLeadId != Guid.Parse(teamLeadUser.Id))
                         {
-                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = $"'{salesEmail}' is not a member of TeamLead '{teamLeadEmail}'." });
+                            result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = string.Format(_localizer["ImportSalesNotUnderTeamLead"], salesEmail, teamLeadEmail) });
                             result.Skipped++; continue;
                         }
 
@@ -175,10 +187,19 @@ namespace DealTrack.Infrastructure.Services
                     }
                 }
 
+                // Check plan limit — only applies to the row's assigned user (typically the current user for Sales)
+                if (remaining <= 0)
+                {
+                    result.Errors.Add(new ImportRowError { Row = rowNum, Name = name, Reason = _localizer["ImportPlanLimitReached"] });
+                    result.Skipped++;
+                    continue;
+                }
+
                 seenInFile.Add(phone);
                 var client = new Client(tenantId, name, phone, notes, assignedToUserId);
                 await _uow.Write<Client>().AddAsync(client, ct);
                 result.Imported++;
+                remaining--;
             }
 
             if (result.Imported > 0)
@@ -205,20 +226,20 @@ namespace DealTrack.Infrastructure.Services
                         throw new InvalidOperationException($"File contains forbidden content: {f}.");
         }
 
-        private static string? SanitizeCell(string raw, int row, string field, ImportResultDto result)
+        private string? SanitizeCell(string raw, int row, string field, ImportResultDto result)
         {
             var value = raw.Trim();
             if (string.IsNullOrEmpty(value)) return value;
 
             if (ForbiddenFirstChars.Contains(value[0]))
             {
-                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = $"{field} contains forbidden characters (formula injection)." });
+                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = string.Format(_localizer["ImportFormulaInjection"], field) });
                 return null;
             }
 
             if (value.Length > 200)
             {
-                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = $"{field} exceeds 200 characters." });
+                result.Errors.Add(new ImportRowError { Row = row, Name = "", Reason = string.Format(_localizer["ImportFieldTooLong"], field) });
                 return null;
             }
 

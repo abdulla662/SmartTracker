@@ -132,44 +132,62 @@ namespace DealTrack.Infrastructure.Services
         }
 
         // ── Mapping helpers ───────────────────────────────────────────────────
+        private static int SafeInt(SqlDataReader r, string col)
+        {
+            var i = r.GetOrdinal(col);
+            return r.IsDBNull(i) ? 0 : r.GetInt32(i);
+        }
+
+        private static decimal SafeDec(SqlDataReader r, string col)
+        {
+            var i = r.GetOrdinal(col);
+            return r.IsDBNull(i) ? 0m : r.GetDecimal(i);
+        }
+
+        private static string SafeStr(SqlDataReader r, string col)
+        {
+            var i = r.GetOrdinal(col);
+            return r.IsDBNull(i) ? string.Empty : r.GetString(i);
+        }
+
         private static void FillScalars(DashboardSummaryDto dto, SqlDataReader r)
         {
-            dto.TotalClientsCount     = r.GetInt32(r.GetOrdinal("TotalClients"));
-            dto.TodayFollowUpsCount   = r.GetInt32(r.GetOrdinal("TodayFollowUps"));
-            dto.OverdueFollowUpsCount = r.GetInt32(r.GetOrdinal("OverdueFollowUps"));
-            dto.PendingFollowUpsCount = r.GetInt32(r.GetOrdinal("PendingFollowUps"));
-            dto.CompletedTodayCount   = r.GetInt32(r.GetOrdinal("CompletedToday"));
-            dto.TotalPaidAmount       = r.GetDecimal(r.GetOrdinal("TotalRevenue"));
-            dto.TotalPaymentsCount    = r.GetInt32(r.GetOrdinal("TotalPayments"));
-            dto.FollowUpsDone         = r.GetInt32(r.GetOrdinal("FollowUpsDone"));
-            dto.FollowUpsMissed       = r.GetInt32(r.GetOrdinal("FollowUpsMissed"));
+            dto.TotalClientsCount     = SafeInt(r, "TotalClients");
+            dto.TodayFollowUpsCount   = SafeInt(r, "TodayFollowUps");
+            dto.OverdueFollowUpsCount = SafeInt(r, "OverdueFollowUps");
+            dto.PendingFollowUpsCount = SafeInt(r, "PendingFollowUps");
+            dto.CompletedTodayCount   = SafeInt(r, "CompletedToday");
+            dto.TotalPaidAmount       = SafeDec(r, "TotalRevenue");
+            dto.TotalPaymentsCount    = SafeInt(r, "TotalPayments");
+            dto.FollowUpsDone         = SafeInt(r, "FollowUpsDone");
+            dto.FollowUpsMissed       = SafeInt(r, "FollowUpsMissed");
         }
 
         private static void FillStatusBreakdown(DashboardSummaryDto dto, SqlDataReader r)
         {
-            dto.PendingFollowUpsCount = r.GetInt32(r.GetOrdinal("Pending"));
-            dto.FollowUpsDone         = r.GetInt32(r.GetOrdinal("Done"));
-            dto.FollowUpsMissed       = r.GetInt32(r.GetOrdinal("Missed"));
+            dto.PendingFollowUpsCount = SafeInt(r, "Pending");
+            dto.FollowUpsDone         = SafeInt(r, "Done");
+            dto.FollowUpsMissed       = SafeInt(r, "Missed");
         }
 
         private static MonthlyRevenueDto ReadMonthlyRevenue(SqlDataReader r) => new()
         {
-            Year      = r.GetInt32(r.GetOrdinal("Year")),
-            Month     = r.GetInt32(r.GetOrdinal("Month")),
-            MonthName = r.GetString(r.GetOrdinal("MonthName")),
-            Amount    = r.GetDecimal(r.GetOrdinal("Amount")),
-            Count     = r.GetInt32(r.GetOrdinal("Count")),
+            Year      = SafeInt(r, "Year"),
+            Month     = SafeInt(r, "Month"),
+            MonthName = SafeStr(r, "MonthName"),
+            Amount    = SafeDec(r, "Amount"),
+            Count     = SafeInt(r, "Count"),
         };
 
         private static TeamMemberStatDto ReadTeamMember(SqlDataReader r) => new()
         {
-            MemberName       = r.GetString(r.GetOrdinal("MemberName")),
-            RoleId           = r.IsDBNull(r.GetOrdinal("RoleId")) ? 0 : r.GetInt32(r.GetOrdinal("RoleId")),
-            ClientsCount     = r.GetInt32(r.GetOrdinal("ClientsCount")),
-            Revenue          = r.GetDecimal(r.GetOrdinal("Revenue")),
-            FollowUpsDone    = r.GetInt32(r.GetOrdinal("FollowUpsDone")),
-            FollowUpsPending = r.GetInt32(r.GetOrdinal("FollowUpsPending")),
-            FollowUpsOverdue = r.GetInt32(r.GetOrdinal("FollowUpsOverdue")),
+            MemberName       = SafeStr(r, "MemberName"),
+            RoleId           = SafeInt(r, "RoleId"),
+            ClientsCount     = SafeInt(r, "ClientsCount"),
+            Revenue          = SafeDec(r, "Revenue"),
+            FollowUpsDone    = SafeInt(r, "FollowUpsDone"),
+            FollowUpsPending = SafeInt(r, "FollowUpsPending"),
+            FollowUpsOverdue = SafeInt(r, "FollowUpsOverdue"),
         };
     }
 }

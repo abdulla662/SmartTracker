@@ -85,4 +85,31 @@
     <data name="PasswordResetSent" xml:space="preserve"><value>If this email exists, a reset link has been sent</value></data>
     <data name="PasswordResetSuccess" xml:space="preserve"><value>Password reset successfully</value></data>
     <data name="InvalidResetToken" xml:space="preserve"><value>Invalid or expired reset token</value></data>
+
+    <!-- Import -->
+    <data name="ImportPlanLimitReached" xml:space="preserve"><value>Plan limit reached — you cannot import more clients on your current plan.</value></data>
+    <data name="ImportOnlyXlsx" xml:space="preserve"><value>Only .xlsx files are allowed.</value></data>
+    <data name="ImportFileTooLarge" xml:space="preserve"><value>File size exceeds the 5 MB limit.</value></data>
+    <data name="ImportTooManyRows" xml:space="preserve"><value>File exceeds the maximum of {0} rows.</value></data>
+    <data name="ImportNameRequired" xml:space="preserve"><value>Name is required.</value></data>
+    <data name="ImportPhoneRequired" xml:space="preserve"><value>Phone is required.</value></data>
+    <data name="ImportPhoneDuplicate" xml:space="preserve"><value>Phone '{0}' already exists — duplicate skipped.</value></data>
+    <data name="ImportNotSalesMember" xml:space="preserve"><value>'{0}' is not a sales member in your team.</value></data>
+    <data name="ImportTeamLeadNotFound" xml:space="preserve"><value>TeamLead '{0}' not found in your tenant.</value></data>
+    <data name="ImportSalesNotFound" xml:space="preserve"><value>Sales user '{0}' not found in your tenant.</value></data>
+    <data name="ImportSalesNotUnderTeamLead" xml:space="preserve"><value>'{0}' is not a member of TeamLead '{1}'.</value></data>
+    <data name="FieldName" xml:space="preserve"><value>Name</value></data>
+    <data name="FieldPhone" xml:space="preserve"><value>Phone</value></data>
+    <data name="ImportFormulaInjection" xml:space="preserve"><value>{0} contains forbidden characters (formula injection).</value></data>
+    <data name="ImportFieldTooLong" xml:space="preserve"><value>{0} exceeds 200 characters.</value></data>
+    <data name="PreferencesSaved" xml:space="preserve"><value>Notification preferences saved successfully</value></data>
+    <data name="ProfileUpdated" xml:space="preserve"><value>Profile updated successfully</value></data>
+    <data name="PasswordChanged" xml:space="preserve"><value>Password changed successfully</value></data>
+    <data name="CompanyNameAlreadyExists" xml:space="preserve"><value>A company with this name already exists. Please use a different company name or ask the admin to invite you.</value></data>
+    <data name="JoinRequestSent" xml:space="preserve"><value>Your join request has been sent to the company admin. You will be notified once approved.</value></data>
+    <data name="AccountPendingApproval" xml:space="preserve"><value>Your account is pending approval by the company admin.</value></data>
+    <data name="JoinRequestAccepted" xml:space="preserve"><value>Join request accepted successfully.</value></data>
+    <data name="JoinRequestRejected" xml:space="preserve"><value>Join request rejected.</value></data>
+    <data name="JoinRequestNotFound" xml:space="preserve"><value>Join request not found.</value></data>
+    <data name="JoinRequestsRetrieved" xml:space="preserve"><value>Join requests retrieved successfully.</value></data>
 </root>

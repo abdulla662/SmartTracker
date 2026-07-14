@@ -23,6 +23,7 @@ namespace DealTrack.Application.DependencyInjection
             services.AddScoped<IActivityLogService, ActivityLogService>();
             services.AddScoped<IActivityLogQueryService, ActivityLogQueryService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IJoinRequestService, JoinRequestService>();
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             return services;

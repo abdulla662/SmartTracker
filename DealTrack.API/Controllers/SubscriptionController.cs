@@ -3,6 +3,7 @@ using DealTrack.Application.DTOs.Subscription;
 using DealTrack.Application.ServicesInterfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.IO;
 
 namespace DealTrack.API.Controllers
@@ -12,10 +13,12 @@ namespace DealTrack.API.Controllers
     public class SubscriptionController : ControllerBase
     {
         private readonly ISubscriptionService _subscriptionService;
+        private readonly string _frontendUrl;
 
-        public SubscriptionController(ISubscriptionService subscriptionService)
+        public SubscriptionController(ISubscriptionService subscriptionService, IConfiguration config)
         {
             _subscriptionService = subscriptionService;
+            _frontendUrl = config["AppSettings:FrontendUrl"] ?? "";
         }
 
         [HttpPost("initiate")]
@@ -44,14 +47,14 @@ namespace DealTrack.API.Controllers
             var hmac = query["hmac"].ToString();
 
             if (success != "true" || string.IsNullOrEmpty(merchantOrderId))
-                return Redirect($"/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}");
+                return Redirect($"{_frontendUrl}/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}");
 
             var result = await _subscriptionService.HandleWebhookGetAsync(merchantOrderId, hmac, ct);
 
             var activated = result?.Success == true;
             var redirectUrl = activated
-                ? $"/payment/callback?success=true&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}"
-                : $"/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}";
+                ? $"{_frontendUrl}/payment/callback?success=true&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}"
+                : $"{_frontendUrl}/payment/callback?success=false&merchant_order_id={Uri.EscapeDataString(merchantOrderId)}";
 
             return Redirect(redirectUrl);
         }

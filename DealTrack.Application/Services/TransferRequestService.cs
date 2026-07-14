@@ -7,6 +7,7 @@ using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
+using System.Text.Json;
 
 namespace DealTrack.Application.Services
 {
@@ -53,9 +54,16 @@ namespace DealTrack.Application.Services
             await _uow.Write<TransferRequest>().AddAsync(request, ct);
             await _uow.SaveChangesAsync();
 
+            var fromUser = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == _currentUser.UserId, ct);
+            var notifMsg = JsonSerializer.Serialize(new
+            {
+                key = "notif.msg.transferRequestReceived",
+                @params = new { salesName = sales.FullName, fromName = fromUser?.FullName ?? "" },
+                link = "/team"
+            });
             await _notifications.CreateAsync(
                 Guid.Parse(dto.ToTeamLeadId), _currentUser.TenantId,
-                "Transfer Request", $"You have a new transfer request for a Sales member.",
+                "Transfer Request", notifMsg,
                 NotificationType.TransferRequestReceived, ct);
 
             return ApiResponseT<TransferRequestResponseDto>.SuccessResponse(
@@ -68,8 +76,8 @@ namespace DealTrack.Application.Services
             if (request is null)
                 return ApiResponse.FailureResponse(_localizer["TransferRequestNotFound"], HttpStatusCode.NotFound);
 
-            // بس الـ ToTeamLead يقدر يرد
-            if (request.ToTeamLeadId != _currentUser.UserId)
+            // بس الـ ToTeamLead يقدر يرد — GUID casing can differ between JWT claim and DB
+            if (!string.Equals(request.ToTeamLeadId, _currentUser.UserId, StringComparison.OrdinalIgnoreCase))
                 return ApiResponse.FailureResponse(_localizer["AccessDenied"], HttpStatusCode.Forbidden);
 
             if (request.Status != TransferRequestStatus.Pending)
@@ -96,10 +104,16 @@ namespace DealTrack.Application.Services
             await _uow.Write<TransferRequest>().UpdateAsync(request, ct);
             await _uow.SaveChangesAsync();
 
+            var respondingSales = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == request.SalesUserId, ct);
             var notifType = dto.Accept ? NotificationType.TransferRequestAccepted : NotificationType.TransferRequestRejected;
             var notifTitle = dto.Accept ? "Transfer Accepted" : "Transfer Rejected";
-            var notifMsg = dto.Accept ? "Your transfer request has been accepted." : "Your transfer request has been rejected.";
-            await _notifications.CreateAsync(Guid.Parse(request.FromTeamLeadId), _currentUser.TenantId, notifTitle, notifMsg, notifType, ct);
+            var responseMsg = JsonSerializer.Serialize(new
+            {
+                key = dto.Accept ? "notif.msg.transferAccepted" : "notif.msg.transferRejected",
+                @params = new { salesName = respondingSales?.FullName ?? "", toName = _currentUser.UserName ?? "" },
+                link = "/team"
+            });
+            await _notifications.CreateAsync(Guid.Parse(request.FromTeamLeadId), _currentUser.TenantId, notifTitle, responseMsg, notifType, ct);
 
             return ApiResponse.SuccessResponse(message: dto.Accept
                 ? _localizer["TransferRequestAccepted"]

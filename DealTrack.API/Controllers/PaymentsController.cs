@@ -56,5 +56,9 @@ namespace DealTrack.API.Controllers
         [HttpPut("client/{clientId:guid}/deal-amount")]
         public async Task<ApiResponse> SetDealAmount(Guid clientId, [FromBody] SetDealAmountDto dto, CancellationToken ct)
             => await _paymentService.SetDealAmountAsync(clientId, dto.TotalDealAmount, ct);
+
+        [HttpDelete("client/{clientId:guid}/summary")]
+        public async Task<ApiResponse> DeleteClientSummary(Guid clientId, CancellationToken ct)
+            => await _paymentService.DeleteClientSummaryAsync(clientId, ct);
     }
 }

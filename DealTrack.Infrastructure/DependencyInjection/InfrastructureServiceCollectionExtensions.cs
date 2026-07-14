@@ -79,6 +79,9 @@ namespace DealTrack.Infrastructure.DependencyInjection
 
             services.AddMassTransit(x =>
             {
+                // Register request client with 2-minute timeout — Claude Vision can take 15-30s
+                x.AddRequestClient<OcrRequested>(new Uri("queue:ocr-requested"), RequestTimeout.After(m: 2));
+
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
@@ -86,7 +89,6 @@ namespace DealTrack.Infrastructure.DependencyInjection
                         h.Username(configuration["RabbitMQ:Username"] ?? "guest");
                         h.Password(configuration["RabbitMQ:Password"] ?? "guest");
                     });
-
                 });
             });
 

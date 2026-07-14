@@ -10,6 +10,9 @@ using Hangfire;
 using Serilog;
 using System.Threading.RateLimiting;
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+Console.InputEncoding = System.Text.Encoding.UTF8;
+
 var builder = WebApplication.CreateBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
@@ -25,7 +28,8 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<DealTrack.API.Services.OcrPythonHostedService>();
 builder.Services.AddEndpointsApiExplorer();
@@ -112,7 +116,10 @@ builder.Services.AddScoped<MarkMissedFollowUpsJob>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendDev", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "https://wilt-asleep-peroxide.ngrok-free.dev")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -137,6 +144,7 @@ app.UseRequestLocalization(options =>
 });
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("FrontendDev");
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseRateLimiter();
@@ -158,7 +166,7 @@ using (var scope = app.Services.CreateScope())
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DealTrack.Infrastructure.Persistence.AppDbContext>();
-    await db.Database.MigrateAsync();
+    try { await db.Database.MigrateAsync(); } catch { /* schema already up to date */ }
     await DealTrack.Infrastructure.Persistence.SqlScriptRunner.RunStoredProceduresAsync(db);
 }
 

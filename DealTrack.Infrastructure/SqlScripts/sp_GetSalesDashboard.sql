@@ -5,22 +5,21 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @UserGuid    UNIQUEIDENTIFIER = TRY_CAST(@UserId AS UNIQUEIDENTIFIER);
-    DECLARE @Today       DATE             = CAST(GETUTCDATE() AS DATE);
-    DECLARE @TodayStart  DATETIME2        = CAST(@Today AS DATETIME2);
-    DECLARE @TomStart    DATETIME2        = DATEADD(DAY, 1, @TodayStart);
-    DECLARE @SixMonAgo   DATE             = DATEFROMPARTS(YEAR(GETUTCDATE()), MONTH(GETUTCDATE()), 1);
-    SET @SixMonAgo = DATEADD(MONTH, -5, @SixMonAgo);
+    DECLARE @Today       DATE      = CAST(GETUTCDATE() AS DATE);
+    DECLARE @TodayStart  DATETIME2 = CAST(@Today AS DATETIME2);
+    DECLARE @TomStart    DATETIME2 = DATEADD(DAY, 1, @TodayStart);
+    DECLARE @SixMonAgo   DATE      = DATEADD(MONTH, -5, DATEFROMPARTS(YEAR(GETUTCDATE()), MONTH(GETUTCDATE()), 1));
 
     -- ── RS1: Summary scalars ───────────────────────────────────────────────
     SELECT
-        (SELECT COUNT(*) FROM Clients WHERE IsDeleted=0 AND TenantId=@TenantId AND AssignedToUserId=@UserId
+        (SELECT COUNT(*) FROM Clients
+         WHERE IsDeleted=0 AND TenantId=@TenantId AND AssignedToUserId=@UserId
         ) AS TotalClients,
 
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid
+              AND c.AssignedToUserId=@UserId
               AND f.FollowUpDate >= @TodayStart AND f.FollowUpDate < @TomStart
               AND f.Status='Pending'
         ) AS TodayFollowUps,
@@ -28,19 +27,19 @@ BEGIN
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid AND f.Status='Missed'
+              AND c.AssignedToUserId=@UserId AND f.Status='Missed'
         ) AS OverdueFollowUps,
 
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid AND f.Status='Pending'
+              AND c.AssignedToUserId=@UserId AND f.Status='Pending'
         ) AS PendingFollowUps,
 
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid
+              AND c.AssignedToUserId=@UserId
               AND f.FollowUpDate >= @TodayStart AND f.FollowUpDate < @TomStart
               AND f.Status='Done'
         ) AS CompletedToday,
@@ -60,13 +59,13 @@ BEGIN
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid AND f.Status='Done'
+              AND c.AssignedToUserId=@UserId AND f.Status='Done'
         ) AS FollowUpsDone,
 
         (SELECT COUNT(*) FROM FollowUps f
             INNER JOIN Clients c ON f.ClientId=c.Id
             WHERE f.IsDeleted=0 AND c.IsDeleted=0 AND c.TenantId=@TenantId
-              AND f.CreatedByUserId=@UserGuid AND f.Status='Missed'
+              AND c.AssignedToUserId=@UserId AND f.Status='Missed'
         ) AS FollowUpsMissed;
 
     -- ── RS2: Monthly Revenue (last 6 months) ──────────────────────────────
@@ -86,11 +85,11 @@ BEGIN
 
     -- ── RS3: Follow-up status breakdown ───────────────────────────────────
     SELECT
-        SUM(CASE WHEN f.Status='Pending' THEN 1 ELSE 0 END) AS Pending,
-        SUM(CASE WHEN f.Status='Done'    THEN 1 ELSE 0 END) AS Done,
-        SUM(CASE WHEN f.Status='Missed'  THEN 1 ELSE 0 END) AS Missed
+        ISNULL(SUM(CASE WHEN f.Status='Pending' THEN 1 ELSE 0 END), 0) AS Pending,
+        ISNULL(SUM(CASE WHEN f.Status='Done'    THEN 1 ELSE 0 END), 0) AS Done,
+        ISNULL(SUM(CASE WHEN f.Status='Missed'  THEN 1 ELSE 0 END), 0) AS Missed
     FROM FollowUps f
     INNER JOIN Clients c ON f.ClientId=c.Id
     WHERE f.IsDeleted=0 AND c.IsDeleted=0
-      AND c.TenantId=@TenantId AND f.CreatedByUserId=@UserGuid;
+      AND c.TenantId=@TenantId AND c.AssignedToUserId=@UserId;
 END

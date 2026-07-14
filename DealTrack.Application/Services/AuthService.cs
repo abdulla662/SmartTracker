@@ -26,6 +26,7 @@ namespace DealTrack.Application.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ICurrentUserService _currentUser;
         private readonly IEmailService _emailService;
+        private readonly INotificationService _notifications;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -33,7 +34,8 @@ namespace DealTrack.Application.Services
             IUnitOfWork uow,
             IStringLocalizer<SharedResource> localizer,
             ICurrentUserService currentUser,
-            IEmailService emailService)
+            IEmailService emailService,
+            INotificationService notifications)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -41,7 +43,7 @@ namespace DealTrack.Application.Services
             _localizer = localizer;
             _currentUser = currentUser;
             _emailService = emailService;
-
+            _notifications = notifications;
         }
 
         public async Task<ApiResponse> RegisterAsync(RegisterDto request)
@@ -56,10 +58,54 @@ namespace DealTrack.Application.Services
             if (string.IsNullOrWhiteSpace(request.CompanyName))
                 return ApiResponse.FailureResponse(_localizer["CompanyNameRequired"]);
 
+            // Check if a tenant with this company name already exists
+            var normalizedInput = request.CompanyName.Replace(" ", "").ToLower();
+            var allTenants = await _uow.Read<Tenant>().ListAsync(_ => true, default);
+            var existingTenant = allTenants
+                .FirstOrDefault(t => t.Name.Replace(" ", "").ToLower() == normalizedInput);
+
+            // Existing company → create pending join request under that tenant
+            if (existingTenant != null)
+            {
+                var requestedRole = request.RequestedRole ?? UserRole.Sales;
+                // Only Sales or TeamLead can request to join; Admin slot belongs to the founder
+                if (requestedRole == UserRole.Admin)
+                    requestedRole = UserRole.Sales;
+
+                var pendingUser = new ApplicationUser
+                {
+                    FullName = request.FullName,
+                    Email = request.Email,
+                    UserName = request.Email,
+                    Role = requestedRole,
+                    SubscriptionPlan = existingTenant.Plan,
+                    TenantId = existingTenant.Id,
+                    IsApproved = false
+                };
+
+                var pendingResult = await _userManager.CreateAsync(pendingUser, request.Password);
+                if (!pendingResult.Succeeded)
+                    return ApiResponse.FailureResponse(pendingResult.Errors.First().Description);
+
+                // Notify the tenant's Admin
+                var admin = _userManager.Users
+                    .FirstOrDefault(u => u.TenantId == existingTenant.Id && u.Role == UserRole.Admin);
+                if (admin != null)
+                    await _notifications.CreateAsync(
+                        Guid.Parse(admin.Id),
+                        existingTenant.Id,
+                        "New Join Request",
+                        $"{request.FullName} wants to join your company as {requestedRole}.",
+                        NotificationType.SystemNotification);
+
+                return ApiResponse.SuccessResponse(message: _localizer["JoinRequestSent"]);
+            }
+
             UserRole role = request.SubscriptionPlan switch
             {
-                SubscriptionPlan.Free => UserRole.Sales,
-                SubscriptionPlan.Pro => UserRole.TeamLead,
+                SubscriptionPlan.Free     => UserRole.Sales,
+                SubscriptionPlan.Advanced => UserRole.Admin,
+                SubscriptionPlan.Pro      => UserRole.Admin,
                 SubscriptionPlan.Enterprise => UserRole.Admin,
                 _ => throw new InvalidOperationException(_localizer["InvalidSubscriptionPlan"])
             };
@@ -74,7 +120,8 @@ namespace DealTrack.Application.Services
                 UserName = request.Email,
                 Role = role,
                 SubscriptionPlan = request.SubscriptionPlan,
-                TenantId = tenant.Id
+                TenantId = tenant.Id,
+                IsApproved = true
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
@@ -95,6 +142,9 @@ namespace DealTrack.Application.Services
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid)
                 return ApiResponseT<AuthResponseDto>.FailureResponse(_localizer["InvalidCredentials"]);
+
+            if (!user.IsApproved && user.Role!=UserRole.Admin)
+                return ApiResponseT<AuthResponseDto>.FailureResponse(_localizer["AccountPendingApproval"], HttpStatusCode.Forbidden);
 
             var accessToken = GenerateJwtToken(user);
 
