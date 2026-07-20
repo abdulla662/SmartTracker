@@ -1,5 +1,6 @@
 ﻿using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Team;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -8,7 +9,7 @@ using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Localization;
 using System.Net;
-using System.Text.Json;
+
 
 namespace DealTrack.Application.Services
 {
@@ -64,10 +65,20 @@ namespace DealTrack.Application.Services
                     Email = s.Email ?? string.Empty
                 }).ToList();
 
+            var hrUsers = await _uow.Read<ApplicationUser>()
+                .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.HR && u.IsApproved, ct);
+            var accountantUsers = await _uow.Read<ApplicationUser>()
+                .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Accountant && u.IsApproved, ct);
+            var adminUsers = await _uow.Read<ApplicationUser>()
+                .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Admin && u.IsApproved, ct);
+
             var result = new TeamsResponseDto
             {
                 TeamLeads = teamLeadDtos,
-                IndividualSales = individualSales
+                IndividualSales = individualSales,
+                HrMembers = hrUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
+                Accountants = accountantUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
+                Admins = adminUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
             };
 
             return ApiResponseT<TeamsResponseDto>.SuccessResponse(result);
@@ -145,18 +156,11 @@ namespace DealTrack.Application.Services
             if (!result.Succeeded)
                 return ApiResponseT<bool>.FailureResponse(result.Errors.First().Description, HttpStatusCode.BadRequest);
 
-            // Notify the TeamLead (structured JSON for i18n on frontend)
-            var notifMsg = JsonSerializer.Serialize(new
-            {
-                key = "notif.msg.memberAssigned",
-                @params = new { name = member.FullName },
-                link = $"/team"
-            });
             await _notifications.CreateAsync(
                 Guid.Parse(teamLeadId),
                 tenantId,
-                "New Team Member",
-                notifMsg,
+                NotifKey.Build("notif.title.newMember"),
+                NotifKey.Build("notif.msg.newTeamMember", member.FullName),
                 NotificationType.NewMemberJoined,
                 ct);
 

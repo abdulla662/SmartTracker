@@ -1,6 +1,7 @@
 using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Clients;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -34,20 +35,45 @@ namespace DealTrack.Application.Services
         public async Task<ApiResponseT<PagedResult<ClientResponseDto>>> GetClientsAsync(ClientFilterDto filter, CancellationToken ct = default)
         {
             var userId = _currentUser.UserId;
+            var tenantId = _currentUser.TenantId;
             var isAdmin = _currentUser.Role == UserRole.Admin;
+            var isTL    = _currentUser.Role == UserRole.TeamLead;
+
+            // Determine which user IDs are visible to the caller
+            ISet<string>? visibleUserIds = null;
+            if (isTL)
+            {
+                var members = await _uow.Read<ApplicationUser>().ListAsync(
+                    u => u.TenantId == tenantId && u.TeamLeadId.HasValue && u.TeamLeadId.ToString() == userId, ct);
+                visibleUserIds = members.Select(m => m.Id).Append(userId).ToHashSet();
+            }
 
             var all = await _uow.Read<Client>().ListAsync(c =>
-                (isAdmin || c.AssignedToUserId == userId) &&
+                // Scope: Admin sees all, TL sees own + team, Sales sees own
+                (isAdmin || (isTL && visibleUserIds!.Contains(c.AssignedToUserId)) || c.AssignedToUserId == userId) &&
+                // Optional filter by specific user (for the "filter by member" dropdown)
+                (string.IsNullOrEmpty(filter.AssignedToUserId) || c.AssignedToUserId == filter.AssignedToUserId) &&
+                // Search
                 (string.IsNullOrEmpty(filter.Search) ||
                  c.Name.Contains(filter.Search) ||
                  c.Phone.Contains(filter.Search)), ct);
+
+            // Load user names for all unique assignees
+            var assigneeIds = all.Select(c => c.AssignedToUserId).Distinct().ToList();
+            var assignees = await _uow.Read<ApplicationUser>().ListAsync(u => assigneeIds.Contains(u.Id), ct);
+            var assigneeMap = assignees.ToDictionary(u => u.Id, u => u.FullName ?? u.UserName ?? "");
 
             var totalCount = all.Count;
             var items = all
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((filter.Page - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .Select(c => _mapper.Map<ClientResponseDto>(c))
+                .Select(c =>
+                {
+                    var dto = _mapper.Map<ClientResponseDto>(c);
+                    dto.AssignedToUserName = assigneeMap.GetValueOrDefault(c.AssignedToUserId, "");
+                    return dto;
+                })
                 .ToList();
 
             return ApiResponseT<PagedResult<ClientResponseDto>>.SuccessResponse(new PagedResult<ClientResponseDto>
@@ -94,7 +120,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<Client>().AddAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("CreateClient", client.Id, "Client", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"added a new client ({dto.Name})", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "addedClient", new[] { dto.Name }, $"/clients/{client.Id}", ct);
 
             return ApiResponseT<ClientResponseDto>.SuccessResponse(
                 _mapper.Map<ClientResponseDto>(client), _localizer["ClientCreated"], HttpStatusCode.Created);
@@ -113,7 +139,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<Client>().UpdateAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdateClient", client.Id, "Client", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"updated client ({client.Name})", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "updatedClient", new[] { client.Name }, $"/clients/{id}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientUpdated"]);
         }
@@ -139,7 +165,7 @@ namespace DealTrack.Application.Services
             await _uow.SoftDelete<Client>().SoftDeleteAsync(client, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeleteClient", client.Id, "Client", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"deleted client ({client.Name})", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deletedClient", new[] { client.Name }, null, ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["ClientDeleted"]);
         }
@@ -193,8 +219,8 @@ namespace DealTrack.Application.Services
             await _notifications.CreateAsync(
                 Guid.Parse(dto.NewSalesUserId),
                 newSales.TenantId,
-                "Client Assigned to You",
-                $"Client '{client.Name}' has been assigned to you.",
+                NotifKey.Build("notif.title.clientAssigned"),
+                NotifKey.Build("notif.msg.clientAssigned", client.Name),
                 NotificationType.ClientReassigned, ct);
 
             // Notify the new TeamLead — Ahmed joined your team
@@ -203,8 +229,8 @@ namespace DealTrack.Application.Services
                 await _notifications.CreateAsync(
                     newSales.TeamLeadId.Value,
                     newSales.TenantId,
-                    "New Member Joined Your Team",
-                    $"'{newSales.FullName}' has been added to your team by the admin.",
+                    NotifKey.Build("notif.title.newMember"),
+                    NotifKey.Build("notif.msg.newTeamMember", newSales.FullName),
                     NotificationType.NewMemberJoined, ct);
             }
 
@@ -214,8 +240,8 @@ namespace DealTrack.Application.Services
                 await _notifications.CreateAsync(
                     oldSales.TeamLeadId.Value,
                     oldSales.TenantId,
-                    "Team Member Left Your Team",
-                    $"'{oldSales.FullName}' has been transferred to another team by the admin.",
+                    NotifKey.Build("notif.title.memberLeft"),
+                    NotifKey.Build("notif.msg.memberLeft", oldSales.FullName),
                     NotificationType.ClientReassigned, ct);
             }
 

@@ -1,5 +1,5 @@
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Reflection;
 
 namespace DealTrack.Infrastructure.Persistence
@@ -22,18 +22,18 @@ namespace DealTrack.Infrastructure.Persistence
                 using var reader = new StreamReader(stream);
                 var fullScript = await reader.ReadToEndAsync();
 
-                // Split on GO statements
+                // Split on DELIMITER statements (MySQL style)
                 var batches = fullScript
-                    .Split(["\nGO", "\r\nGO"], StringSplitOptions.RemoveEmptyEntries)
+                    .Split([";;"], StringSplitOptions.RemoveEmptyEntries)
                     .Select(b => b.Trim())
                     .Where(b => !string.IsNullOrWhiteSpace(b));
 
-                await using var conn = new SqlConnection(connectionString);
+                await using var conn = new MySqlConnection(connectionString);
                 await conn.OpenAsync();
 
                 foreach (var batch in batches)
                 {
-                    await using var cmd = new SqlCommand(batch, conn);
+                    await using var cmd = new MySqlCommand(batch, conn);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }

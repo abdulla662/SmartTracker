@@ -7,21 +7,39 @@ namespace DealTrack.Domain.Entities
     {
         public string Name { get; private set; }
         public SubscriptionPlan Plan { get; private set; }
+        public bool IsPersonal { get; private set; }
+        public string? Industry { get; private set; }
+        public string? Address { get; private set; }
+        public string? Website { get; private set; }
+        public string Currency { get; private set; } = "EGP";
+        public string Timezone { get; private set; } = "Africa/Cairo";
 
         public ICollection<ApplicationUser> Users { get; private set; } = new List<ApplicationUser>();
         public ICollection<TenantInvite> TenantInvites { get; private set; } = new List<TenantInvite>();
 
         private Tenant() { Name = string.Empty; }
 
-        public Tenant(string name, SubscriptionPlan plan)
+        public Tenant(string name, SubscriptionPlan plan, bool isPersonal = false)
         {
             Name = name;
             Plan = plan;
+            IsPersonal = isPersonal;
         }
 
         public void UpdatePlan(SubscriptionPlan plan)
         {
             Plan = plan;
+            MarkUpdated();
+        }
+
+        public void UpdateInfo(string name, string? industry, string? address, string? website, string? currency, string? timezone)
+        {
+            Name = name;
+            Industry = industry;
+            Address = address;
+            Website = website;
+            Currency = string.IsNullOrWhiteSpace(currency) ? "EGP" : currency;
+            Timezone = string.IsNullOrWhiteSpace(timezone) ? "Africa/Cairo" : timezone;
             MarkUpdated();
         }
     }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.FollowUps;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -88,7 +89,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().AddAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("CreateFollowUp", followUp.Id, "FollowUp", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"created a follow-up for {client.Name} on {dto.FollowUpDate:yyyy-MM-dd}", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "createdFollowUp", new[] { client.Name, dto.FollowUpDate.ToString("yyyy-MM-dd") }, $"/clients/{dto.ClientId}", ct);
 
             var result = _mapper.Map<FollowUpResponseDto>(followUp);
             result.ClientName = client.Name;
@@ -106,7 +107,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("MarkFollowUpDone", followUp.Id, "FollowUp", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "marked a follow-up as done", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "doneFollowUp", Array.Empty<string>(), $"/clients/{followUp.ClientId}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedDone"]);
         }
@@ -125,10 +126,10 @@ namespace DealTrack.Application.Services
             await _notifications.CreateAsync(
                 followUp.CreatedByUserId,
                 followUp.TenantId,
-                "Missed Follow-up",
-                $"You missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd HH:mm}.",
+                NotifKey.Build("notif.title.missedFollowUp"),
+                NotifKey.Build("notif.msg.missedFollowUp", followUp.FollowUpDate.ToString("yyyy-MM-dd HH:mm")),
                 NotificationType.FollowUpReminder, ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd}", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "missedFollowUp", new[] { followUp.FollowUpDate.ToString("yyyy-MM-dd") }, $"/clients/{followUp.ClientId}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpMarkedMissed"]);
         }
@@ -142,7 +143,7 @@ namespace DealTrack.Application.Services
             await _uow.SoftDelete<FollowUp>().SoftDeleteAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeleteFollowUp", followUp.Id, "FollowUp", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deleted a follow-up", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deletedFollowUp", Array.Empty<string>(), null, ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpDeleted"]);
         }
@@ -160,7 +161,7 @@ namespace DealTrack.Application.Services
             await _uow.Write<FollowUp>().UpdateAsync(followUp, ct);
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdateFollowUp", followUp.Id, "FollowUp", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "updated a follow-up", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "updatedFollowUp", Array.Empty<string>(), $"/clients/{followUp.ClientId}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["FollowUpUpdated"]);
         }

@@ -1,0 +1,96 @@
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: DealTrackDb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: DealTrack.API/Dockerfile
+    ports:
+      - "7071:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=DealTrackDb;User=root;Password=${MYSQL_ROOT_PASSWORD};
+      - RabbitMQ__Host=rabbitmq
+      - JwtSettings__Key=${JWT_KEY}
+      - JwtSettings__Issuer=MyApi
+      - JwtSettings__Audience=MyApiUsers
+      - JwtSettings__ExpireMinutes=60
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Paymob__ApiKey=${PAYMOB_API_KEY}
+      - Paymob__IntegrationId=${PAYMOB_INTEGRATION_ID}
+      - Paymob__IframeId=${PAYMOB_IFRAME_ID}
+      - Paymob__HmacSecret=${PAYMOB_HMAC_SECRET}
+      - Gmail__Host=smtp.gmail.com
+      - Gmail__Port=587
+      - Gmail__Username=${GMAIL_USERNAME}
+      - Gmail__AppPassword=${GMAIL_APP_PASSWORD}
+      - Gmail__FromEmail=${GMAIL_FROM_EMAIL}
+      - Gmail__FromName=DealTrack
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ocr:
+    build:
+      context: ./ocr-service
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: ["http", "frontend:80", "--log=stdout"]
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: C:/Users/USER/Desktop/MyProjectFrontEnd/FrontEndProjectFinal
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  rabbitmq_data:

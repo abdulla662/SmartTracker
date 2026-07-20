@@ -1,5 +1,6 @@
 using DealTrack.Application.Common;
 using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -31,8 +32,13 @@ namespace DealTrack.Infrastructure.Persistence
         public DbSet<TransferRequest> TransferRequests => Set<TransferRequest>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
-
-
+        public DbSet<Target> Targets => Set<Target>();
+        public DbSet<MonthlySalary> MonthlySalaries => Set<MonthlySalary>();
+        public DbSet<SalaryAdjustment> SalaryAdjustments => Set<SalaryAdjustment>();
+        public DbSet<HRActionRequest> HRActionRequests => Set<HRActionRequest>();
+        public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
+        public DbSet<ChatParticipant> ChatParticipants => Set<ChatParticipant>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
         public void ApplyFilter(RequestFilterContext ctx) => _filterContext = ctx;
 
@@ -79,6 +85,43 @@ namespace DealTrack.Infrastructure.Persistence
             modelBuilder.Entity<TransferRequest>().HasQueryFilter(x =>
                 (!ApplySoftDeleteFilter || !x.IsDeleted) &&
                 (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<Target>().HasQueryFilter(x =>
+                (!ApplySoftDeleteFilter || !x.IsDeleted) &&
+                (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<MonthlySalary>().HasQueryFilter(x =>
+                (!ApplySoftDeleteFilter || !x.IsDeleted) &&
+                (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<SalaryAdjustment>().HasQueryFilter(x =>
+                (!ApplySoftDeleteFilter || !x.IsDeleted) &&
+                (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<HRActionRequest>().HasQueryFilter(x =>
+                (!ApplySoftDeleteFilter || !x.IsDeleted) &&
+                (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            // Chat
+            modelBuilder.Entity<ChatConversation>().HasQueryFilter(x =>
+                !x.IsDeleted && (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<ChatMessage>().HasQueryFilter(x =>
+                !x.IsDeleted && (CurrentTenantId == null || x.TenantId == CurrentTenantId));
+
+            modelBuilder.Entity<ChatParticipant>()
+                .HasKey(p => new { p.ConversationId, p.UserId });
+
+            modelBuilder.Entity<ChatParticipant>()
+                .HasOne(p => p.Conversation)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(p => p.ConversationId);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.Conversation)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ConversationId);
+
             base.OnModelCreating(modelBuilder);
         }
     }

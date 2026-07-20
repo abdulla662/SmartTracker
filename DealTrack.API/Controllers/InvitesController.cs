@@ -34,5 +34,16 @@ namespace DealTrack.API.Controllers
         [HttpGet]
         public async Task<ApiResponseT<List<GetInviteDto>>> GetAllInvites(CancellationToken ct)
             => await _inviteService.GetAllInvites(ct);
+
+        [HttpGet("info/{code}")]
+        [AllowAnonymous]
+        public async Task<ApiResponseT<InviteInfoDto>> GetInviteInfo(string code, CancellationToken ct)
+            => await _inviteService.GetInviteInfoAsync(code, ct);
+
+        [HttpPost("revoke-resend")]
+        public async Task<ApiResponseT<GetInviteDto>> RevokeAndResend(
+            [FromBody] string email,
+            CancellationToken ct)
+            => await _inviteService.RevokeAndResendAsync(email, ct);
     }
 }

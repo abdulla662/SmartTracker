@@ -52,19 +52,45 @@ namespace DealTrack.Infrastructure.Services
             if (user is null)
                 return ApiResponseT<InitiatePaymentResponseDto>.FailureResponse("User not found.");
 
+            // Resolve the public backend URL (ngrok tunnel or configured fallback)
+            var backendPublicUrl = await GetBackendPublicUrlAsync();
+
             // Step 1: Auth token
             var authToken = await GetAuthTokenAsync();
 
             // Step 2: Order registration
             var orderId = await RegisterOrderAsync(authToken, planInfo.AmountCents, dto.Plan);
 
-            // Step 3: Payment key
-            var paymentKey = await GetPaymentKeyAsync(authToken, orderId, planInfo.AmountCents, user);
+            // Step 3: Payment key — pass redirect_url so Paymob knows where to send the user after payment
+            var redirectUrl = string.IsNullOrEmpty(backendPublicUrl)
+                ? null
+                : $"{backendPublicUrl}/api/subscription/webhook";
+            var paymentKey = await GetPaymentKeyAsync(authToken, orderId, planInfo.AmountCents, user, redirectUrl);
 
             var paymentUrl = $"https://accept.paymob.com/api/acceptance/iframes/{IframeId}?payment_token={paymentKey}";
 
             return ApiResponseT<InitiatePaymentResponseDto>.SuccessResponse(
                 new InitiatePaymentResponseDto { PaymentUrl = paymentUrl });
+        }
+
+        private async Task<string> GetBackendPublicUrlAsync()
+        {
+            // 1. Try ngrok's local API (when running inside Docker)
+            try
+            {
+                var json = await _http.GetStringAsync("http://ngrok:4040/api/tunnels");
+                using var doc = JsonDocument.Parse(json);
+                foreach (var tunnel in doc.RootElement.GetProperty("tunnels").EnumerateArray())
+                {
+                    var url = tunnel.GetProperty("public_url").GetString() ?? "";
+                    if (url.StartsWith("https://"))
+                        return url;
+                }
+            }
+            catch { /* ngrok not running */ }
+
+            // 2. Fall back to appsettings value
+            return _config["AppSettings:BackendPublicUrl"] ?? "";
         }
 
         public async Task<ApiResponse> HandleWebhookAsync(string rawBody, string hmacHeader, CancellationToken ct)
@@ -101,6 +127,15 @@ namespace DealTrack.Infrastructure.Services
 
             user.SubscriptionPlan = planInfo.Plan;
             await _userManager.UpdateAsync(user);
+
+            // Also upgrade the tenant so all members see the new plan
+            var tenant = await _uow.Read<Tenant>().GetSingleAsync(t => t.Id == user.TenantId, ct);
+            if (tenant is not null)
+            {
+                tenant.UpdatePlan(planInfo.Plan);
+                await _uow.Write<Tenant>().UpdateAsync(tenant, ct);
+                await _uow.SaveChangesAsync();
+            }
 
             return ApiResponse.SuccessResponse("Subscription upgraded successfully.");
         }
@@ -142,33 +177,38 @@ namespace DealTrack.Infrastructure.Services
             return doc.RootElement.GetProperty("id").GetInt64();
         }
 
-        private async Task<string> GetPaymentKeyAsync(string authToken, long orderId, int amountCents, ApplicationUser user)
+        private async Task<string> GetPaymentKeyAsync(string authToken, long orderId, int amountCents, ApplicationUser user, string? redirectUrl = null)
         {
-            var body = JsonSerializer.Serialize(new
+            var payload = new Dictionary<string, object>
             {
-                auth_token = authToken,
-                amount_cents = amountCents,
-                expiration = 3600,
-                order_id = orderId,
-                billing_data = new
+                ["auth_token"]     = authToken,
+                ["amount_cents"]   = amountCents,
+                ["expiration"]     = 3600,
+                ["order_id"]       = orderId,
+                ["currency"]       = "EGP",
+                ["integration_id"] = int.Parse(IntegrationId),
+                ["billing_data"]   = new
                 {
-                    first_name = user.FullName,
-                    last_name = ".",
-                    email = user.Email,
-                    phone_number = user.PhoneNumber ?? "N/A",
-                    apartment = "N/A",
-                    floor = "N/A",
-                    street = "N/A",
-                    building = "N/A",
+                    first_name      = user.FullName,
+                    last_name       = ".",
+                    email           = user.Email,
+                    phone_number    = user.PhoneNumber ?? "N/A",
+                    apartment       = "N/A",
+                    floor           = "N/A",
+                    street          = "N/A",
+                    building        = "N/A",
                     shipping_method = "N/A",
-                    postal_code = "N/A",
-                    city = "N/A",
-                    country = "EG",
-                    state = "N/A"
-                },
-                currency = "EGP",
-                integration_id = int.Parse(IntegrationId)
-            });
+                    postal_code     = "N/A",
+                    city            = "N/A",
+                    country         = "EG",
+                    state           = "N/A"
+                }
+            };
+
+            if (!string.IsNullOrEmpty(redirectUrl))
+                payload["redirect_url"] = redirectUrl;
+
+            var body = JsonSerializer.Serialize(payload);
 
             var response = await _http.PostAsync(
                 "https://accept.paymob.com/api/acceptance/payment_keys",

@@ -237,6 +237,12 @@
   <data name="InviteAlreadySent" xml:space="preserve">
     <value>Eine Einladung wurde bereits an diese E-Mail gesendet</value>
   </data>
+  <data name="InviteRevoked" xml:space="preserve">
+    <value>Einladung widerrufen und eine neue wurde gesendet</value>
+  </data>
+  <data name="InviteNotFound" xml:space="preserve">
+    <value>Einladung nicht gefunden oder bereits verwendet</value>
+  </data>
   <data name="Unauthorized" xml:space="preserve">
     <value>Nicht autorisiert</value>
   </data>
@@ -261,4 +267,134 @@
   <data name="InvalidResetToken" xml:space="preserve">
     <value>Ungültiger oder abgelaufener Reset-Token</value>
   </data>
+  <data name="CompanyNotFound" xml:space="preserve">
+    <value>Kein Unternehmen mit diesem Namen gefunden. Überprüfen Sie die Schreibweise oder lassen Sie das Feld leer, um unabhängig zu arbeiten.</value>
+  </data>
+  <data name="CompanyHasNoAdmin" xml:space="preserve">
+    <value>Dieses Unternehmen existiert, hat aber noch keinen Administrator. Kontaktieren Sie sie, um eine Einladung zu erhalten.</value>
+  </data>
+  <data name="NoPendingRequest" xml:space="preserve">
+    <value>Keine ausstehende Beitrittsanfrage für dieses Konto gefunden.</value>
+  </data>
+  <data name="JoinRequestCancelled" xml:space="preserve">
+    <value>Ihre Beitrittsanfrage wurde erfolgreich zurückgezogen.</value>
+  </data>
+  <data name="WithdrawalCodeSent" xml:space="preserve">
+    <value>Ein 6-stelliger Verifizierungscode wurde an Ihre E-Mail gesendet. Er läuft in 15 Minuten ab.</value>
+  </data>
+  <data name="InvalidWithdrawalCode" xml:space="preserve">
+    <value>Ungültiger oder abgelaufener Verifizierungscode. Bitte fordern Sie einen neuen an.</value>
+  </data>
+  <data name="IncorrectPassword" xml:space="preserve"><value>Aktuelles Passwort ist falsch.</value></data>
+  <data name="TenantUpdated" xml:space="preserve"><value>Unternehmenseinstellungen erfolgreich aktualisiert.</value></data>
+  <data name="CannotUpdatePersonalTenant" xml:space="preserve"><value>Persönliche Arbeitsbereiche können nicht als Unternehmen aktualisiert werden.</value></data>
+
+  <!-- Targets -->
+  <data name="TargetSaved" xml:space="preserve"><value>Ziel erfolgreich gespeichert</value></data>
+  <data name="TargetDeleted" xml:space="preserve"><value>Ziel erfolgreich gelöscht</value></data>
+  <data name="TargetNotFound" xml:space="preserve"><value>Ziel nicht gefunden</value></data>
+  <data name="TargetAccessDenied" xml:space="preserve"><value>Sie dürfen dieses Ziel nicht verwalten</value></data>
+  <data name="TargetValueMustBePositive" xml:space="preserve"><value>Der Zielwert muss größer als null sein</value></data>
+  <data name="CustomTypeNameRequired" xml:space="preserve"><value>Bitte geben Sie einen Namen für den benutzerdefinierten Zieltyp ein</value></data>
+  <data name="InvalidMonth" xml:space="preserve"><value>Der Monat muss zwischen 1 und 12 liegen</value></data>
+  <data name="InvalidYear" xml:space="preserve"><value>Ungültiges Jahr</value></data>
+  <data name="notif.title.targetAssigned" xml:space="preserve"><value>Neues Ziel zugewiesen</value></data>
+  <data name="notif.msg.targetAssigned" xml:space="preserve"><value>{0} hat Ihnen ein {1}-Ziel von {2} für den Zeitraum {3} zugewiesen.</value></data>
+
+  <!-- Notification Titles -->
+  <data name="notif.title.teamActivity" xml:space="preserve"><value>Teammitglied-Aktivität</value></data>
+  <data name="notif.title.tlActivity" xml:space="preserve"><value>Teamleiter-Aktivität</value></data>
+  <data name="notif.title.joinRequest" xml:space="preserve"><value>Neuer Beitrittsantrag</value></data>
+  <data name="notif.title.joinWithdrawn" xml:space="preserve"><value>Beitrittsantrag zurückgezogen</value></data>
+  <data name="notif.title.joinApproved" xml:space="preserve"><value>Beitrittsantrag genehmigt</value></data>
+  <data name="notif.title.clientAssigned" xml:space="preserve"><value>Kunde Ihnen zugewiesen</value></data>
+  <data name="notif.title.newMember" xml:space="preserve"><value>Neues Teammitglied</value></data>
+  <data name="notif.title.memberLeft" xml:space="preserve"><value>Teammitglied ausgeschieden</value></data>
+  <data name="notif.title.missedFollowUp" xml:space="preserve"><value>Verpasste Nachverfolgung</value></data>
+  <data name="notif.title.paymentRecorded" xml:space="preserve"><value>Zahlung erfasst</value></data>
+  <data name="notif.title.newMemberJoined" xml:space="preserve"><value>Neues Mitglied beigetreten</value></data>
+  <data name="notif.title.transferRequest" xml:space="preserve"><value>Übertragungsanfrage</value></data>
+  <data name="notif.title.transferAccepted" xml:space="preserve"><value>Übertragung akzeptiert</value></data>
+  <data name="notif.title.transferRejected" xml:space="preserve"><value>Übertragung abgelehnt</value></data>
+
+  <!-- Notification Messages -->
+  <data name="notif.msg.joinRequest" xml:space="preserve"><value>{0} möchte Ihrem Unternehmen als {1} beitreten.</value></data>
+  <data name="notif.msg.joinWithdrawn" xml:space="preserve"><value>{0} hat seinen Beitrittsantrag für die Rolle {1} zurückgezogen.</value></data>
+  <data name="notif.msg.joinApproved" xml:space="preserve"><value>Ihr Beitrittsantrag zum Unternehmen wurde genehmigt. Willkommen im Team!</value></data>
+  <data name="notif.msg.clientAssigned" xml:space="preserve"><value>Kunde '{0}' wurde Ihnen zugewiesen.</value></data>
+  <data name="notif.msg.newTeamMember" xml:space="preserve"><value>'{0}' wurde von einem Administrator zu Ihrem Team hinzugefügt.</value></data>
+  <data name="notif.msg.memberLeft" xml:space="preserve"><value>'{0}' wurde von einem Administrator in ein anderes Team versetzt.</value></data>
+  <data name="notif.msg.missedFollowUp" xml:space="preserve"><value>Sie haben eine für {0} geplante Nachverfolgung verpasst.</value></data>
+  <data name="notif.msg.paymentRecorded" xml:space="preserve"><value>Eine Zahlung von {0} wurde für {1} erfasst.</value></data>
+  <data name="notif.msg.newMemberJoined" xml:space="preserve"><value>{0} ist Ihrem Team beigetreten.</value></data>
+  <data name="notif.msg.transferRequest" xml:space="preserve"><value>{0} möchte {1} zu Ihrem Team übertragen.</value></data>
+  <data name="notif.msg.transferAccepted" xml:space="preserve"><value>{0} hat die Übertragung von {1} akzeptiert.</value></data>
+  <data name="notif.msg.transferRejected" xml:space="preserve"><value>{0} hat die Übertragung von {1} abgelehnt.</value></data>
+
+  <!-- Upstream: Sales led by TL -->
+  <data name="notif.msg.salesLed.addedClient" xml:space="preserve"><value>{0} (geführt von {1}) hat einen neuen Kunden hinzugefügt: {2}.</value></data>
+  <data name="notif.msg.salesLed.updatedClient" xml:space="preserve"><value>{0} (geführt von {1}) hat den Kunden aktualisiert: {2}.</value></data>
+  <data name="notif.msg.salesLed.deletedClient" xml:space="preserve"><value>{0} (geführt von {1}) hat den Kunden gelöscht: {2}.</value></data>
+  <data name="notif.msg.salesLed.createdFollowUp" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Nachverfolgung für {2} am {3} erstellt.</value></data>
+  <data name="notif.msg.salesLed.doneFollowUp" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Nachverfolgung als erledigt markiert.</value></data>
+  <data name="notif.msg.salesLed.missedFollowUp" xml:space="preserve"><value>{0} (geführt von {1}) hat eine für {2} geplante Nachverfolgung verpasst.</value></data>
+  <data name="notif.msg.salesLed.deletedFollowUp" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Nachverfolgung gelöscht.</value></data>
+  <data name="notif.msg.salesLed.updatedFollowUp" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Nachverfolgung aktualisiert.</value></data>
+  <data name="notif.msg.salesLed.recordedPayment" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Zahlung von {2} für {3} erfasst.</value></data>
+  <data name="notif.msg.salesLed.deletedPayment" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Zahlung gelöscht.</value></data>
+  <data name="notif.msg.salesLed.updatedPayment" xml:space="preserve"><value>{0} (geführt von {1}) hat eine Zahlung auf {2} aktualisiert.</value></data>
+
+  <!-- Upstream: Sales without TL -->
+  <data name="notif.msg.sales.addedClient" xml:space="preserve"><value>{0} hat einen neuen Kunden hinzugefügt: {1}.</value></data>
+  <data name="notif.msg.sales.updatedClient" xml:space="preserve"><value>{0} hat den Kunden aktualisiert: {1}.</value></data>
+  <data name="notif.msg.sales.deletedClient" xml:space="preserve"><value>{0} hat den Kunden gelöscht: {1}.</value></data>
+  <data name="notif.msg.sales.createdFollowUp" xml:space="preserve"><value>{0} hat eine Nachverfolgung für {1} am {2} erstellt.</value></data>
+  <data name="notif.msg.sales.doneFollowUp" xml:space="preserve"><value>{0} hat eine Nachverfolgung als erledigt markiert.</value></data>
+  <data name="notif.msg.sales.missedFollowUp" xml:space="preserve"><value>{0} hat eine für {1} geplante Nachverfolgung verpasst.</value></data>
+  <data name="notif.msg.sales.deletedFollowUp" xml:space="preserve"><value>{0} hat eine Nachverfolgung gelöscht.</value></data>
+  <data name="notif.msg.sales.updatedFollowUp" xml:space="preserve"><value>{0} hat eine Nachverfolgung aktualisiert.</value></data>
+  <data name="notif.msg.sales.recordedPayment" xml:space="preserve"><value>{0} hat eine Zahlung von {1} für {2} erfasst.</value></data>
+  <data name="notif.msg.sales.deletedPayment" xml:space="preserve"><value>{0} hat eine Zahlung gelöscht.</value></data>
+  <data name="notif.msg.sales.updatedPayment" xml:space="preserve"><value>{0} hat eine Zahlung auf {1} aktualisiert.</value></data>
+
+  <!-- Upstream: TeamLead -->
+  <data name="notif.msg.tl.addedClient" xml:space="preserve"><value>{0} (Teamleiter) hat einen neuen Kunden hinzugefügt: {1}.</value></data>
+  <data name="notif.msg.tl.updatedClient" xml:space="preserve"><value>{0} (Teamleiter) hat den Kunden aktualisiert: {1}.</value></data>
+  <data name="notif.msg.tl.deletedClient" xml:space="preserve"><value>{0} (Teamleiter) hat den Kunden gelöscht: {1}.</value></data>
+  <data name="notif.msg.tl.createdFollowUp" xml:space="preserve"><value>{0} (Teamleiter) hat eine Nachverfolgung für {1} am {2} erstellt.</value></data>
+  <data name="notif.msg.tl.doneFollowUp" xml:space="preserve"><value>{0} (Teamleiter) hat eine Nachverfolgung als erledigt markiert.</value></data>
+  <data name="notif.msg.tl.missedFollowUp" xml:space="preserve"><value>{0} (Teamleiter) hat eine für {1} geplante Nachverfolgung verpasst.</value></data>
+  <data name="notif.msg.tl.deletedFollowUp" xml:space="preserve"><value>{0} (Teamleiter) hat eine Nachverfolgung gelöscht.</value></data>
+  <data name="notif.msg.tl.updatedFollowUp" xml:space="preserve"><value>{0} (Teamleiter) hat eine Nachverfolgung aktualisiert.</value></data>
+  <data name="notif.msg.tl.recordedPayment" xml:space="preserve"><value>{0} (Teamleiter) hat eine Zahlung von {1} für {2} erfasst.</value></data>
+  <data name="notif.msg.tl.deletedPayment" xml:space="preserve"><value>{0} (Teamleiter) hat eine Zahlung gelöscht.</value></data>
+  <data name="notif.msg.tl.updatedPayment" xml:space="preserve"><value>{0} (Teamleiter) hat eine Zahlung auf {1} aktualisiert.</value></data>
+
+  <!-- Salary -->
+  <data name="SalarySaved" xml:space="preserve"><value>Grundgehalt erfolgreich gespeichert</value></data>
+  <data name="AdjustmentAdded" xml:space="preserve"><value>Anpassung erfolgreich hinzugefügt</value></data>
+  <data name="AdjustmentDeleted" xml:space="preserve"><value>Anpassung erfolgreich gelöscht</value></data>
+  <data name="SalaryMustBePositive" xml:space="preserve"><value>Gehalt und Beträge müssen positiv sein</value></data>
+  <data name="NotFound" xml:space="preserve"><value>Datensatz nicht gefunden</value></data>
+  <data name="notif.title.salaryUpdated" xml:space="preserve"><value>Gehalt aktualisiert</value></data>
+  <data name="notif.msg.salaryUpdated" xml:space="preserve"><value>{0} hat Ihr Grundgehalt für den Zeitraum {2} auf {1} festgelegt.</value></data>
+  <data name="notif.title.salaryAdjusted" xml:space="preserve"><value>Gehaltsanpassung</value></data>
+  <data name="notif.msg.salaryBonus" xml:space="preserve"><value>{0} hat einen Bonus von {1} hinzugefügt — {2}.</value></data>
+  <data name="notif.msg.salaryDeduction" xml:space="preserve"><value>{0} hat einen Abzug von {1} hinzugefügt — {2}.</value></data>
+
+  <!-- HR -->
+  <data name="HRActionSubmitted" xml:space="preserve"><value>HR-Anfrage zur Genehmigung eingereicht</value></data>
+  <data name="HRActionApproved" xml:space="preserve"><value>HR-Aktion genehmigt und ausgeführt</value></data>
+  <data name="HRActionRejected" xml:space="preserve"><value>HR-Aktion abgelehnt</value></data>
+  <data name="HRActionAlreadyReviewed" xml:space="preserve"><value>Diese Anfrage wurde bereits überprüft</value></data>
+  <data name="TeamLeadRequired" xml:space="preserve"><value>Bitte wählen Sie einen Teamleiter für die Zuweisung aus</value></data>
+  <data name="notif.title.hrActionPending" xml:space="preserve"><value>HR-Aktion ausstehend</value></data>
+  <data name="notif.msg.hrActionPending" xml:space="preserve"><value>{0} hat eine HR-Anfrage gestellt: {1} für {2}. Bitte überprüfen.</value></data>
+  <data name="notif.title.hrActionReviewed" xml:space="preserve"><value>HR-Aktion überprüft</value></data>
+  <data name="notif.msg.hrActionApproved" xml:space="preserve"><value>{0} hat Ihre Anfrage genehmigt: {1}. Hinweis: {2}</value></data>
+  <data name="notif.msg.hrActionRejected" xml:space="preserve"><value>{0} hat Ihre Anfrage abgelehnt: {1}. Hinweis: {2}</value></data>
+  <data name="notif.title.hrActionExecuted" xml:space="preserve"><value>Organisatorische Änderung</value></data>
+  <data name="notif.title.welcomeApproved" xml:space="preserve"><value>Willkommen im Team! 🎉</value></data>
+  <data name="notif.msg.welcomeApproved" xml:space="preserve"><value>Ihr Konto wurde genehmigt! Sie können sich jetzt anmelden und die Plattform nutzen. Willkommen!</value></data>
+  <data name="notif.msg.hrActionExecuted" xml:space="preserve"><value>Eine organisatorische Maßnahme wurde auf Ihr Konto angewendet: {0}.</value></data>
 </root>

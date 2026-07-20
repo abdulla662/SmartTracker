@@ -7,6 +7,8 @@ using DealTrack.Application.DependencyInjection;
 using DealTrack.Infrastructure.BackgroundJobs;
 using DealTrack.Infrastructure.DependencyInjection;
 using Hangfire;
+using Hangfire.MySql;
+using Hangfire.Storage;
 using Serilog;
 using System.Threading.RateLimiting;
 
@@ -84,10 +86,38 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
+    // Public lookup endpoints: 10 per minute per IP — prevents enumeration scripts
+    options.AddPolicy("public-lookup", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    // Sensitive auth actions: 3 per 15 minutes per IP — register, OTP, forgot-password
+    options.AddPolicy("auth-sensitive", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(15),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
     options.RejectionStatusCode = 429;
 
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
+        // SignalR hubs make many legitimate long-poll requests — exempt them entirely
+        if (context.Request.Path.StartsWithSegments("/hubs"))
+            return RateLimitPartition.GetNoLimiter("hubs");
+
         var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                      ?? context.Connection.RemoteIpAddress?.ToString()
                      ?? "unknown";
@@ -96,7 +126,7 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: userId,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 100,
+                PermitLimit = 300,
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
@@ -108,7 +138,7 @@ builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+    .UseStorage(new MySqlStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new MySqlStorageOptions())));
 
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<MarkMissedFollowUpsJob>();
@@ -119,9 +149,11 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:5173",
                 "http://localhost:5174",
+                "http://localhost",
+                "http://localhost:80",
                 "https://wilt-asleep-peroxide.ngrok-free.dev")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
+              .WithHeaders("Authorization", "Content-Type", "Accept-Language", "Accept", "X-Requested-With")
+              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
               .AllowCredentials());
 });
 
@@ -144,8 +176,8 @@ app.UseRequestLocalization(options =>
 });
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseCors("FrontendDev");
+app.UseStaticFiles();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseRateLimiter();
 app.UseAuthentication();
@@ -172,4 +204,5 @@ using (var scope = app.Services.CreateScope())
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireCors("FrontendDev");
+app.MapHub<ChatHub>("/hubs/chat").RequireCors("FrontendDev");
 app.Run();

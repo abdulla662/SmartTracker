@@ -18,7 +18,8 @@ from mistralai.client import Mistral
 from PIL import Image, ImageEnhance, ImageFilter
 
 # ─── Config ───────────────────────────────────────────────────────────────────
-RABBITMQ_URL  = "amqp://guest:guest@localhost/"
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+RABBITMQ_URL  = f"amqp://guest:guest@{RABBITMQ_HOST}/"
 QUEUE_NAME    = "ocr-requested"
 EXCHANGE_NAME = "DealTrack.Application.Contracts:OcrRequested"
 

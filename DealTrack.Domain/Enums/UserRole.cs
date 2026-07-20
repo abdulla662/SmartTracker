@@ -4,6 +4,8 @@
     {
         Admin = 1,
         TeamLead = 2,
-        Sales = 3
+        Sales = 3,
+        Accountant = 4,
+        HR = 5
     }
 }

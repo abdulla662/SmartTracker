@@ -4,5 +4,6 @@ namespace DealTrack.Application.ServicesInterfaces
     {
         Task SendInviteEmailAsync(string toEmail, string companyName, string inviteCode);
         Task SendPasswordResetEmailAsync(string toEmail, string resetLink);
+        Task SendWithdrawalVerificationAsync(string toEmail, string code);
     }
 }

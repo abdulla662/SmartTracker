@@ -13,5 +13,9 @@ namespace DealTrack.Application.ServicesInterfaces
         Task<ApiResponse> LogoutAsync(CancellationToken ct);
         Task<ApiResponse> ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken ct);
         Task<ApiResponse> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken ct);
+        Task<ApiResponseT<CompanyCheckResult>> CheckCompanyAsync(string companyName);
+        Task<ApiResponseT<PendingRequestInfoDto>> GetPendingRequestAsync(string email);
+        Task<ApiResponse> SendWithdrawalCodeAsync(SendWithdrawalCodeDto dto);
+        Task<ApiResponse> CancelPendingRequestAsync(CancelPendingRequestDto dto);
     }
 }

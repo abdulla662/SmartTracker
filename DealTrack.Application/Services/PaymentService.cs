@@ -1,6 +1,7 @@
 using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Payments;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -96,10 +97,10 @@ namespace DealTrack.Application.Services
             await _notifications.CreateAsync(
                 Guid.Parse(_currentUser.UserId),
                 _currentUser.TenantId,
-                "Payment Recorded",
-                $"A payment of {dto.Amount:C} was recorded for {client.Name}.",
+                NotifKey.Build("notif.title.paymentRecorded"),
+                NotifKey.Build("notif.msg.paymentRecorded", dto.Amount.ToString("F2"), client.Name),
                 NotificationType.PaymentReminder, ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"recorded a payment of {dto.Amount:C} for {client.Name}", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "recordedPayment", new[] { dto.Amount.ToString("F2"), client.Name }, $"/clients/{dto.ClientId}", ct);
 
             var result = _mapper.Map<PaymentResponseDto>(payment);
             result.ClientName = client.Name;
@@ -203,7 +204,7 @@ namespace DealTrack.Application.Services
 
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("DeletePayment", payment.Id, "Payment", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deleted a payment", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "deletedPayment", Array.Empty<string>(), null, ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentDeleted"]);
         }
@@ -221,7 +222,7 @@ namespace DealTrack.Application.Services
 
             await _uow.SaveChangesAsync();
             await _activityLog.LogAsync("UpdatePayment", payment.Id, "Payment", ct);
-            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, $"updated a payment to {dto.Amount:C}", ct);
+            await _notifications.NotifyUpstreamAsync(_currentUser.UserId, _currentUser.TenantId, "updatedPayment", new[] { dto.Amount.ToString("F2") }, $"/clients/{payment.ClientId}", ct);
 
             return ApiResponse.SuccessResponse(message: _localizer["PaymentUpdated"]);
         }

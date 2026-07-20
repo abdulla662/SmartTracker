@@ -1,4 +1,5 @@
 ﻿using DealTrack.Application.Common;
+using DealTrack.Infrastructure.Authorization;
 using DealTrack.Application.Contracts;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
@@ -25,8 +26,9 @@ namespace DealTrack.Infrastructure.DependencyInjection
             IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection")));
+     options.UseMySql(
+         configuration.GetConnectionString("DefaultConnection"),
+         new MySqlServerVersion(new Version(8, 0, 0))));
 
             services.AddScoped<RequestFilterContext>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -67,15 +69,31 @@ namespace DealTrack.Infrastructure.DependencyInjection
                                 Encoding.UTF8.GetBytes(
                                     configuration["JwtSettings:Key"]!))
                     };
+
+                // SignalR passes the JWT via ?access_token= in WebSocket/SSE URLs
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                            context.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("ProOrEnterprise", policy =>
-                    policy.RequireClaim("SubscriptionPlan", "Pro", "Enterprise"));
-                options.AddPolicy("AdvancedOrHigher", policy =>
-                    policy.RequireClaim("SubscriptionPlan", "Advanced", "Pro", "Enterprise"));
+                // Policies read the live plan from DB via a requirement handler,
+                // so a downgraded tenant cannot use a stale JWT to retain access.
+                options.AddPolicy("ProOrEnterprise",    policy => policy.AddRequirements(new PlanRequirement("Pro", "Enterprise")));
+                options.AddPolicy("AdvancedOrHigher",   policy => policy.AddRequirements(new PlanRequirement("Advanced", "Pro", "Enterprise")));
+                options.AddPolicy("EnterpriseOnly",     policy => policy.AddRequirements(new PlanRequirement("Enterprise")));
             });
+
+            services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PlanRequirementHandler>();
 
             services.AddMassTransit(x =>
             {
@@ -93,6 +111,7 @@ namespace DealTrack.Infrastructure.DependencyInjection
             });
 
             services.AddScoped<IOcrService, OcrService>();
+            services.AddScoped<ITenantService, TenantService>();
 
             return services;
         }

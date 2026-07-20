@@ -1,5 +1,6 @@
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.JoinRequest;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -33,15 +34,24 @@ namespace DealTrack.Application.Services
             _localizer = localizer;
         }
 
-        public Task<ApiResponseT<List<JoinRequestDto>>> GetPendingAsync(CancellationToken ct = default)
+        public async Task<ApiResponseT<List<JoinRequestDto>>> GetPendingAsync(CancellationToken ct = default)
         {
-            if (_currentUser.Role != UserRole.Admin)
-                return Task.FromResult(ApiResponseT<List<JoinRequestDto>>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden));
+            if (_currentUser.Role != UserRole.Admin && _currentUser.Role != UserRole.HR)
+                return ApiResponseT<List<JoinRequestDto>>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
 
             var tenantId = _currentUser.TenantId;
 
+            // Exclude users who already have a pending AcceptJoinRequest HR action
+            var pendingActionUserIds = (await _uow.Read<HRActionRequest>()
+                .ListAsync(a => a.TenantId == tenantId
+                    && a.ActionType == HRActionType.AcceptJoinRequest
+                    && a.Status == HRActionStatus.Pending, ct))
+                .Select(a => a.TargetUserId)
+                .Where(id => id != null)
+                .ToHashSet();
+
             var result = _userManager.Users
-                .Where(u => u.TenantId == tenantId && !u.IsApproved)
+                .Where(u => u.TenantId == tenantId && !u.IsApproved && !pendingActionUserIds.Contains(u.Id))
                 .Select(u => new JoinRequestDto
                 {
                     UserId = u.Id,
@@ -51,12 +61,12 @@ namespace DealTrack.Application.Services
                     RequestedAt = DateTime.UtcNow
                 }).ToList();
 
-            return Task.FromResult(ApiResponseT<List<JoinRequestDto>>.SuccessResponse(result, _localizer["JoinRequestsRetrieved"]));
+            return ApiResponseT<List<JoinRequestDto>>.SuccessResponse(result, _localizer["JoinRequestsRetrieved"]);
         }
 
         public async Task<ApiResponse> AcceptAsync(string userId, CancellationToken ct = default)
         {
-            if (_currentUser.Role != UserRole.Admin)
+            if (_currentUser.Role != UserRole.Admin && _currentUser.Role != UserRole.HR)
                 return ApiResponse.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
 
             var user = await _userManager.FindByIdAsync(userId);
@@ -70,8 +80,8 @@ namespace DealTrack.Application.Services
             await _notifications.CreateAsync(
                 Guid.Parse(user.Id),
                 user.TenantId,
-                "Join Request Approved",
-                $"Your request to join the company has been approved. Welcome to the team!",
+                NotifKey.Build("notif.title.joinApproved"),
+                NotifKey.Build("notif.msg.joinApproved"),
                 NotificationType.SystemNotification,
                 ct);
 
@@ -80,7 +90,7 @@ namespace DealTrack.Application.Services
 
         public async Task<ApiResponse> RejectAsync(string userId, CancellationToken ct = default)
         {
-            if (_currentUser.Role != UserRole.Admin)
+            if (_currentUser.Role != UserRole.Admin && _currentUser.Role != UserRole.HR)
                 return ApiResponse.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
 
             var user = await _userManager.FindByIdAsync(userId);

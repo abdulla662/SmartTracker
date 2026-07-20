@@ -28,7 +28,7 @@ namespace DealTrack.API.ExceptionMiddleWare
             {
                 var response = ApiResponse.FailureResponse(ex.Message, HttpStatusCode.BadRequest);
                 context.Response.ContentType = "application/json";
-                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 var json = JsonSerializer.Serialize(response,
                     new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
                 await context.Response.WriteAsync(json);
@@ -48,7 +48,7 @@ namespace DealTrack.API.ExceptionMiddleWare
                     HttpStatusCode.InternalServerError);
 
                 context.Response.ContentType = "application/json";
-                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
                 var json = JsonSerializer.Serialize(response,
                     new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });

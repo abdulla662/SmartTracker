@@ -1,5 +1,6 @@
 ﻿using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.TransferRequest;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -7,7 +8,7 @@ using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
-using System.Text.Json;
+
 
 namespace DealTrack.Application.Services
 {
@@ -55,15 +56,10 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
 
             var fromUser = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == _currentUser.UserId, ct);
-            var notifMsg = JsonSerializer.Serialize(new
-            {
-                key = "notif.msg.transferRequestReceived",
-                @params = new { salesName = sales.FullName, fromName = fromUser?.FullName ?? "" },
-                link = "/team"
-            });
             await _notifications.CreateAsync(
                 Guid.Parse(dto.ToTeamLeadId), _currentUser.TenantId,
-                "Transfer Request", notifMsg,
+                NotifKey.Build("notif.title.transferRequest"),
+                NotifKey.Build("notif.msg.transferRequest", fromUser?.FullName ?? "", sales.FullName),
                 NotificationType.TransferRequestReceived, ct);
 
             return ApiResponseT<TransferRequestResponseDto>.SuccessResponse(
@@ -106,14 +102,11 @@ namespace DealTrack.Application.Services
 
             var respondingSales = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == request.SalesUserId, ct);
             var notifType = dto.Accept ? NotificationType.TransferRequestAccepted : NotificationType.TransferRequestRejected;
-            var notifTitle = dto.Accept ? "Transfer Accepted" : "Transfer Rejected";
-            var responseMsg = JsonSerializer.Serialize(new
-            {
-                key = dto.Accept ? "notif.msg.transferAccepted" : "notif.msg.transferRejected",
-                @params = new { salesName = respondingSales?.FullName ?? "", toName = _currentUser.UserName ?? "" },
-                link = "/team"
-            });
-            await _notifications.CreateAsync(Guid.Parse(request.FromTeamLeadId), _currentUser.TenantId, notifTitle, responseMsg, notifType, ct);
+            var responderName = _currentUser.UserName ?? "";
+            await _notifications.CreateAsync(Guid.Parse(request.FromTeamLeadId), _currentUser.TenantId,
+                NotifKey.Build(dto.Accept ? "notif.title.transferAccepted" : "notif.title.transferRejected"),
+                NotifKey.Build(dto.Accept ? "notif.msg.transferAccepted" : "notif.msg.transferRejected", responderName, respondingSales?.FullName ?? ""),
+                notifType, ct);
 
             return ApiResponse.SuccessResponse(message: dto.Accept
                 ? _localizer["TransferRequestAccepted"]

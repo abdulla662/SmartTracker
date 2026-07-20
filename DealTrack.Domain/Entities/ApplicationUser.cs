@@ -14,6 +14,7 @@ namespace DealTrack.Domain.Entities
         public Guid TenantId { get; set; }
         public Guid? TeamLeadId { get; set; }
         public bool IsApproved { get; set; } = true;
+        public bool HasBeenWelcomed { get; set; } = true; // false for new join-request users until first login
 
         // Notification preferences
         public bool NotifEmailFollowUps  { get; set; } = true;

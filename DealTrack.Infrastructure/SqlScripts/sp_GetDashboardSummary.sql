@@ -1,11 +1,9 @@
--- Legacy dashboard SP kept for reference; use role-specific SPs instead.
-CREATE OR ALTER PROCEDURE sp_GetDashboardSummary
-    @UserId   NVARCHAR(450),
-    @TenantId UNIQUEIDENTIFIER,
-    @Role     NVARCHAR(50)
-AS
+DROP PROCEDURE IF EXISTS sp_GetDashboardSummary;;
+CREATE PROCEDURE sp_GetDashboardSummary(
+    IN p_UserId   VARCHAR(450),
+    IN p_TenantId CHAR(36),
+    IN p_Role     VARCHAR(50)
+)
 BEGIN
-    SET NOCOUNT ON;
-    DECLARE @Today DATE = CAST(GETUTCDATE() AS DATE);
     SELECT 1 AS Legacy;
-END
+END;;

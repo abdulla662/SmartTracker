@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.TenantInvite;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -62,7 +63,7 @@ namespace DealTrack.Application.Services
                 Email = invite.Email,
                 UserName = invite.Email,
                 TenantId = invite.TenantId,
-                Role = UserRole.Sales,
+                Role = invite.InvitedRole != UserRole.Sales ? invite.InvitedRole : UserRole.Sales,
                 SubscriptionPlan = SubscriptionPlan.Free,
                 TeamLeadId = invite.TeamLeadId  // null = individual, Guid = under a TeamLead
             };
@@ -80,7 +81,8 @@ namespace DealTrack.Application.Services
             {
                 await _notifications.CreateAsync(
                     invite.TeamLeadId.Value, invite.TenantId,
-                    "New Member Joined", $"{dto.FullName} has joined your team.",
+                    NotifKey.Build("notif.title.newMemberJoined"),
+                    NotifKey.Build("notif.msg.newMemberJoined", dto.FullName),
                     NotificationType.NewMemberJoined, ct);
             }
 
@@ -93,13 +95,17 @@ namespace DealTrack.Application.Services
             if (_currentUser.Role != UserRole.Admin && _currentUser.Role != UserRole.TeamLead)
                 return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Unauthorized);
 
+            // Only Admin can invite Accountant or HR
+            if ((dto.InvitedRole == UserRole.Accountant || dto.InvitedRole == UserRole.HR) && _currentUser.Role != UserRole.Admin)
+                return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
+
             var existingUser = await _uow.Read<ApplicationUser>().ListAsync(u => u.Email == dto.Email && u.TenantId == _currentUser.TenantId, ct);
             if (existingUser.Any())
                 return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["UserAlreadyInCompany"]);
 
             var existingInvite = await _uow.Read<TenantInvite>().ListAsync(i => i.Email == dto.Email && i.TenantId == _currentUser.TenantId && !i.IsUsed, ct);
             if (existingInvite.Any())
-                return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["InviteAlreadySent"]);
+                return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["InviteAlreadySent"], HttpStatusCode.Conflict);
 
             // Plan limits check
             if (_currentUser.Role == UserRole.Admin)
@@ -158,7 +164,7 @@ namespace DealTrack.Application.Services
 
             var tenant = await _uow.Read<Tenant>().GetByIdAsync(_currentUser.TenantId, ct);
 
-            var invite = new TenantInvite(_currentUser.TenantId, dto.Email, teamLeadId);
+            var invite = new TenantInvite(_currentUser.TenantId, dto.Email, teamLeadId, dto.InvitedRole, _currentUser.UserId);
             await _uow.Write<TenantInvite>().AddAsync(invite, ct);
             await _uow.SaveChangesAsync();
 
@@ -186,6 +192,68 @@ namespace DealTrack.Application.Services
             }
 
             return ApiResponseT<List<GetInviteDto>>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Unauthorized);
+        }
+
+        public async Task<ApiResponseT<InviteInfoDto>> GetInviteInfoAsync(string code, CancellationToken ct = default)
+        {
+            var invite = await _uow.Read<TenantInvite>()
+                .GetSingleAsync(i => i.InviteCode == code && !i.IsUsed, ct);
+
+            if (invite == null)
+                return ApiResponseT<InviteInfoDto>.FailureResponse(_localizer["InviteNotFound"], HttpStatusCode.NotFound);
+
+            if (invite.ExpiresAt < DateTime.UtcNow)
+                return ApiResponseT<InviteInfoDto>.FailureResponse(_localizer["InviteExpired"], HttpStatusCode.BadRequest);
+
+            var inviterName = string.Empty;
+            if (invite.InvitedByUserId != null)
+            {
+                var inviter = await _userManager.FindByIdAsync(invite.InvitedByUserId);
+                inviterName = inviter?.FullName ?? string.Empty;
+            }
+
+            return ApiResponseT<InviteInfoDto>.SuccessResponse(new InviteInfoDto
+            {
+                Email = invite.Email,
+                InviterName = inviterName,
+                InvitedRole = invite.InvitedRole.ToString(),
+            });
+        }
+
+        public async Task<ApiResponseT<GetInviteDto>> RevokeAndResendAsync(string email, CancellationToken ct = default)
+        {
+            if (_currentUser.Role != UserRole.Admin && _currentUser.Role != UserRole.TeamLead)
+                return ApiResponseT<GetInviteDto>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Unauthorized);
+
+            var existing = await _uow.Read<TenantInvite>()
+                .ListAsync(i => i.Email == email && i.TenantId == _currentUser.TenantId && !i.IsUsed, ct);
+
+            foreach (var old in existing)
+            {
+                old.MarkUsed(); // soft-revoke by marking used
+                await _uow.Write<TenantInvite>().UpdateAsync(old, ct);
+            }
+            await _uow.SaveChangesAsync();
+
+            // Re-use the existing role from the old invite if available
+            var oldRole = existing.FirstOrDefault()?.InvitedRole ?? UserRole.Sales;
+            var oldTeamLeadId = existing.FirstOrDefault()?.TeamLeadId;
+
+            var teamLeadId = _currentUser.Role == UserRole.TeamLead
+                ? Guid.Parse(_currentUser.UserId)
+                : oldTeamLeadId;
+
+            var tenant = await _uow.Read<Tenant>().GetByIdAsync(_currentUser.TenantId, ct);
+            var invite = new TenantInvite(_currentUser.TenantId, email, teamLeadId, oldRole, _currentUser.UserId);
+            await _uow.Write<TenantInvite>().AddAsync(invite, ct);
+            await _uow.SaveChangesAsync();
+
+            await _emailService.SendInviteEmailAsync(email, tenant!.Name, invite.InviteCode);
+
+            return ApiResponseT<GetInviteDto>.SuccessResponse(
+                _mapper.Map<GetInviteDto>(invite),
+                _localizer["InviteRevoked"],
+                HttpStatusCode.Created);
         }
     }
 }

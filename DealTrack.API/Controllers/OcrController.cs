@@ -15,7 +15,7 @@ namespace DealTrack.API.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = "EnterpriseOnly")]
     public class OcrController : ControllerBase
     {
         private readonly IOcrService _ocrService;

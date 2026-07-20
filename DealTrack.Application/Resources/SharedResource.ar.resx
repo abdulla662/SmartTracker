@@ -78,6 +78,8 @@
     <data name="InviteAlreadyUsed" xml:space="preserve"><value>تم استخدام الدعوة مسبقاً</value></data>
     <data name="UserAlreadyInCompany" xml:space="preserve"><value>المستخدم ينتمي لهذه الشركة بالفعل</value></data>
     <data name="InviteAlreadySent" xml:space="preserve"><value>تم إرسال دعوة لهذا البريد الإلكتروني مسبقاً</value></data>
+    <data name="InviteRevoked" xml:space="preserve"><value>تم إلغاء الدعوة القديمة وإرسال دعوة جديدة</value></data>
+    <data name="InviteNotFound" xml:space="preserve"><value>الدعوة غير موجودة أو تم استخدامها مسبقاً</value></data>
     <data name="Unauthorized" xml:space="preserve"><value>غير مصرح</value></data>
     <data name="PaymentUpdated" xml:space="preserve"><value>تم تحديث الدفعة بنجاح</value></data>
     <data name="FollowUpUpdated" xml:space="preserve"><value>تم تحديث المتابعة بنجاح</value></data>
@@ -110,4 +112,122 @@
     <data name="JoinRequestRejected" xml:space="preserve"><value>تم رفض طلب الانضمام.</value></data>
     <data name="JoinRequestNotFound" xml:space="preserve"><value>طلب الانضمام غير موجود.</value></data>
     <data name="JoinRequestsRetrieved" xml:space="preserve"><value>تم استرجاع طلبات الانضمام بنجاح.</value></data>
+    <data name="CompanyNotFound" xml:space="preserve"><value>لا توجد شركة بهذا الاسم. تحقق من الإملاء أو اترك الحقل فارغاً للعمل باستقلالية.</value></data>
+    <data name="CompanyHasNoAdmin" xml:space="preserve"><value>توجد شركة بهذا الاسم ولكن ليس لها مدير بعد. تواصل معهم للحصول على دعوة مباشرة.</value></data>
+    <data name="NoPendingRequest" xml:space="preserve"><value>لا يوجد طلب انضمام معلق لهذا الحساب.</value></data>
+    <data name="JoinRequestCancelled" xml:space="preserve"><value>تم سحب طلب انضمامك بنجاح.</value></data>
+    <data name="WithdrawalCodeSent" xml:space="preserve"><value>تم إرسال رمز تحقق مكوّن من 6 أرقام إلى بريدك الإلكتروني. صالح لمدة 15 دقيقة.</value></data>
+    <data name="InvalidWithdrawalCode" xml:space="preserve"><value>رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد.</value></data>
+    <data name="IncorrectPassword" xml:space="preserve"><value>كلمة المرور الحالية غير صحيحة.</value></data>
+    <data name="TenantUpdated" xml:space="preserve"><value>تم تحديث إعدادات الشركة بنجاح.</value></data>
+    <data name="CannotUpdatePersonalTenant" xml:space="preserve"><value>لا يمكن تحديث مساحات العمل الشخصية كشركة.</value></data>
+
+    <!-- Targets -->
+    <data name="TargetSaved" xml:space="preserve"><value>تم حفظ الهدف بنجاح</value></data>
+    <data name="TargetDeleted" xml:space="preserve"><value>تم حذف الهدف بنجاح</value></data>
+    <data name="TargetNotFound" xml:space="preserve"><value>الهدف غير موجود</value></data>
+    <data name="TargetAccessDenied" xml:space="preserve"><value>لا يُسمح لك بإدارة هذا الهدف</value></data>
+    <data name="TargetValueMustBePositive" xml:space="preserve"><value>يجب أن تكون قيمة الهدف أكبر من الصفر</value></data>
+    <data name="CustomTypeNameRequired" xml:space="preserve"><value>يرجى إدخال اسم لنوع الهدف المخصص</value></data>
+    <data name="InvalidMonth" xml:space="preserve"><value>يجب أن يكون الشهر بين 1 و 12</value></data>
+    <data name="InvalidYear" xml:space="preserve"><value>السنة غير صحيحة</value></data>
+    <data name="notif.title.targetAssigned" xml:space="preserve"><value>تم تعيين هدف جديد</value></data>
+    <data name="notif.msg.targetAssigned" xml:space="preserve"><value>قام {0} بتعيين هدف {1} بقيمة {2} لفترة {3}.</value></data>
+
+    <!-- Notification Titles -->
+    <data name="notif.title.teamActivity" xml:space="preserve"><value>نشاط عضو الفريق</value></data>
+    <data name="notif.title.tlActivity" xml:space="preserve"><value>نشاط قائد الفريق</value></data>
+    <data name="notif.title.joinRequest" xml:space="preserve"><value>طلب انضمام جديد</value></data>
+    <data name="notif.title.joinWithdrawn" xml:space="preserve"><value>سحب طلب الانضمام</value></data>
+    <data name="notif.title.joinApproved" xml:space="preserve"><value>تمت الموافقة على طلب الانضمام</value></data>
+    <data name="notif.title.clientAssigned" xml:space="preserve"><value>عميل مُعيَّن إليك</value></data>
+    <data name="notif.title.newMember" xml:space="preserve"><value>عضو فريق جديد</value></data>
+    <data name="notif.title.memberLeft" xml:space="preserve"><value>مغادرة عضو الفريق</value></data>
+    <data name="notif.title.missedFollowUp" xml:space="preserve"><value>متابعة فائتة</value></data>
+    <data name="notif.title.paymentRecorded" xml:space="preserve"><value>تم تسجيل الدفع</value></data>
+    <data name="notif.title.newMemberJoined" xml:space="preserve"><value>انضم عضو جديد</value></data>
+    <data name="notif.title.transferRequest" xml:space="preserve"><value>طلب تحويل</value></data>
+    <data name="notif.title.transferAccepted" xml:space="preserve"><value>تم قبول التحويل</value></data>
+    <data name="notif.title.transferRejected" xml:space="preserve"><value>تم رفض التحويل</value></data>
+
+    <!-- Notification Messages -->
+    <data name="notif.msg.joinRequest" xml:space="preserve"><value>{0} يرغب في الانضمام إلى شركتك بدور {1}.</value></data>
+    <data name="notif.msg.joinWithdrawn" xml:space="preserve"><value>{0} سحب طلب انضمامه لدور {1}.</value></data>
+    <data name="notif.msg.joinApproved" xml:space="preserve"><value>تمت الموافقة على طلب انضمامك للشركة. مرحباً بك في الفريق!</value></data>
+    <data name="notif.msg.clientAssigned" xml:space="preserve"><value>تم تعيين العميل '{0}' إليك.</value></data>
+    <data name="notif.msg.newTeamMember" xml:space="preserve"><value>تمت إضافة '{0}' إلى فريقك بواسطة المدير.</value></data>
+    <data name="notif.msg.memberLeft" xml:space="preserve"><value>تم نقل '{0}' إلى فريق آخر بواسطة المدير.</value></data>
+    <data name="notif.msg.missedFollowUp" xml:space="preserve"><value>فاتتك متابعة مجدولة في {0}.</value></data>
+    <data name="notif.msg.paymentRecorded" xml:space="preserve"><value>تم تسجيل دفعة بقيمة {0} للعميل {1}.</value></data>
+    <data name="notif.msg.newMemberJoined" xml:space="preserve"><value>انضم {0} إلى فريقك.</value></data>
+    <data name="notif.msg.transferRequest" xml:space="preserve"><value>{0} يريد تحويل {1} إلى فريقك.</value></data>
+    <data name="notif.msg.transferAccepted" xml:space="preserve"><value>{0} قبل تحويل {1}.</value></data>
+    <data name="notif.msg.transferRejected" xml:space="preserve"><value>{0} رفض تحويل {1}.</value></data>
+
+    <!-- Upstream: Sales led by TL -->
+    <data name="notif.msg.salesLed.addedClient" xml:space="preserve"><value>{0} (بقيادة {1}) أضاف عميلاً جديداً: {2}.</value></data>
+    <data name="notif.msg.salesLed.updatedClient" xml:space="preserve"><value>{0} (بقيادة {1}) حدَّث العميل: {2}.</value></data>
+    <data name="notif.msg.salesLed.deletedClient" xml:space="preserve"><value>{0} (بقيادة {1}) حذف العميل: {2}.</value></data>
+    <data name="notif.msg.salesLed.createdFollowUp" xml:space="preserve"><value>{0} (بقيادة {1}) أنشأ متابعة للعميل {2} في {3}.</value></data>
+    <data name="notif.msg.salesLed.doneFollowUp" xml:space="preserve"><value>{0} (بقيادة {1}) علَّم متابعة كمكتملة.</value></data>
+    <data name="notif.msg.salesLed.missedFollowUp" xml:space="preserve"><value>{0} (بقيادة {1}) فاتته متابعة مجدولة في {2}.</value></data>
+    <data name="notif.msg.salesLed.deletedFollowUp" xml:space="preserve"><value>{0} (بقيادة {1}) حذف متابعة.</value></data>
+    <data name="notif.msg.salesLed.updatedFollowUp" xml:space="preserve"><value>{0} (بقيادة {1}) حدَّث متابعة.</value></data>
+    <data name="notif.msg.salesLed.recordedPayment" xml:space="preserve"><value>{0} (بقيادة {1}) سجَّل دفعة بقيمة {2} للعميل {3}.</value></data>
+    <data name="notif.msg.salesLed.deletedPayment" xml:space="preserve"><value>{0} (بقيادة {1}) حذف دفعة.</value></data>
+    <data name="notif.msg.salesLed.updatedPayment" xml:space="preserve"><value>{0} (بقيادة {1}) حدَّث دفعة إلى {2}.</value></data>
+
+    <!-- Upstream: Sales without TL -->
+    <data name="notif.msg.sales.addedClient" xml:space="preserve"><value>{0} أضاف عميلاً جديداً: {1}.</value></data>
+    <data name="notif.msg.sales.updatedClient" xml:space="preserve"><value>{0} حدَّث العميل: {1}.</value></data>
+    <data name="notif.msg.sales.deletedClient" xml:space="preserve"><value>{0} حذف العميل: {1}.</value></data>
+    <data name="notif.msg.sales.createdFollowUp" xml:space="preserve"><value>{0} أنشأ متابعة للعميل {1} في {2}.</value></data>
+    <data name="notif.msg.sales.doneFollowUp" xml:space="preserve"><value>{0} علَّم متابعة كمكتملة.</value></data>
+    <data name="notif.msg.sales.missedFollowUp" xml:space="preserve"><value>{0} فاتته متابعة مجدولة في {1}.</value></data>
+    <data name="notif.msg.sales.deletedFollowUp" xml:space="preserve"><value>{0} حذف متابعة.</value></data>
+    <data name="notif.msg.sales.updatedFollowUp" xml:space="preserve"><value>{0} حدَّث متابعة.</value></data>
+    <data name="notif.msg.sales.recordedPayment" xml:space="preserve"><value>{0} سجَّل دفعة بقيمة {1} للعميل {2}.</value></data>
+    <data name="notif.msg.sales.deletedPayment" xml:space="preserve"><value>{0} حذف دفعة.</value></data>
+    <data name="notif.msg.sales.updatedPayment" xml:space="preserve"><value>{0} حدَّث دفعة إلى {1}.</value></data>
+
+    <!-- Upstream: TeamLead -->
+    <data name="notif.msg.tl.addedClient" xml:space="preserve"><value>{0} (قائد فريق) أضاف عميلاً جديداً: {1}.</value></data>
+    <data name="notif.msg.tl.updatedClient" xml:space="preserve"><value>{0} (قائد فريق) حدَّث العميل: {1}.</value></data>
+    <data name="notif.msg.tl.deletedClient" xml:space="preserve"><value>{0} (قائد فريق) حذف العميل: {1}.</value></data>
+    <data name="notif.msg.tl.createdFollowUp" xml:space="preserve"><value>{0} (قائد فريق) أنشأ متابعة للعميل {1} في {2}.</value></data>
+    <data name="notif.msg.tl.doneFollowUp" xml:space="preserve"><value>{0} (قائد فريق) علَّم متابعة كمكتملة.</value></data>
+    <data name="notif.msg.tl.missedFollowUp" xml:space="preserve"><value>{0} (قائد فريق) فاتته متابعة مجدولة في {1}.</value></data>
+    <data name="notif.msg.tl.deletedFollowUp" xml:space="preserve"><value>{0} (قائد فريق) حذف متابعة.</value></data>
+    <data name="notif.msg.tl.updatedFollowUp" xml:space="preserve"><value>{0} (قائد فريق) حدَّث متابعة.</value></data>
+    <data name="notif.msg.tl.recordedPayment" xml:space="preserve"><value>{0} (قائد فريق) سجَّل دفعة بقيمة {1} للعميل {2}.</value></data>
+    <data name="notif.msg.tl.deletedPayment" xml:space="preserve"><value>{0} (قائد فريق) حذف دفعة.</value></data>
+    <data name="notif.msg.tl.updatedPayment" xml:space="preserve"><value>{0} (قائد فريق) حدَّث دفعة إلى {1}.</value></data>
+
+    <!-- Salary -->
+    <data name="SalarySaved" xml:space="preserve"><value>تم حفظ الراتب الأساسي بنجاح</value></data>
+    <data name="AdjustmentAdded" xml:space="preserve"><value>تمت إضافة التعديل بنجاح</value></data>
+    <data name="AdjustmentDeleted" xml:space="preserve"><value>تم حذف التعديل بنجاح</value></data>
+    <data name="SalaryMustBePositive" xml:space="preserve"><value>يجب أن يكون الراتب والمبالغ موجبة</value></data>
+    <data name="NotFound" xml:space="preserve"><value>السجل غير موجود</value></data>
+    <data name="notif.title.salaryUpdated" xml:space="preserve"><value>تم تحديث الراتب</value></data>
+    <data name="notif.msg.salaryUpdated" xml:space="preserve"><value>{0} حدّد راتبك الأساسي بـ {1} لفترة {2}.</value></data>
+    <data name="notif.title.salaryAdjusted" xml:space="preserve"><value>تعديل الراتب</value></data>
+    <data name="notif.msg.salaryBonus" xml:space="preserve"><value>{0} أضاف حافزاً بقيمة {1} — {2}.</value></data>
+    <data name="notif.msg.salaryDeduction" xml:space="preserve"><value>{0} أضاف خصماً بقيمة {1} — {2}.</value></data>
+
+    <!-- HR -->
+    <data name="HRActionSubmitted" xml:space="preserve"><value>تم إرسال طلب الموارد البشرية للمراجعة</value></data>
+    <data name="HRActionApproved" xml:space="preserve"><value>تمت الموافقة على طلب الموارد البشرية وتنفيذه</value></data>
+    <data name="HRActionRejected" xml:space="preserve"><value>تم رفض طلب الموارد البشرية</value></data>
+    <data name="HRActionAlreadyReviewed" xml:space="preserve"><value>تمت مراجعة هذا الطلب مسبقاً</value></data>
+    <data name="TeamLeadRequired" xml:space="preserve"><value>الرجاء تحديد قائد الفريق للتعيين</value></data>
+    <data name="notif.title.hrActionPending" xml:space="preserve"><value>طلب موارد بشرية معلق</value></data>
+    <data name="notif.msg.hrActionPending" xml:space="preserve"><value>{0} أرسل طلب موارد بشرية: {1} لـ {2}. يرجى المراجعة.</value></data>
+    <data name="notif.title.hrActionReviewed" xml:space="preserve"><value>تمت مراجعة طلب الموارد البشرية</value></data>
+    <data name="notif.msg.hrActionApproved" xml:space="preserve"><value>{0} وافق على طلبك: {1}. ملاحظة: {2}</value></data>
+    <data name="notif.msg.hrActionRejected" xml:space="preserve"><value>{0} رفض طلبك: {1}. ملاحظة: {2}</value></data>
+    <data name="notif.title.hrActionExecuted" xml:space="preserve"><value>تغيير تنظيمي</value></data>
+    <data name="notif.msg.hrActionExecuted" xml:space="preserve"><value>تم تطبيق إجراء تنظيمي على حسابك: {0}.</value></data>
+    <data name="notif.title.welcomeApproved" xml:space="preserve"><value>أهلاً بك في الفريق! 🎉</value></data>
+    <data name="notif.msg.welcomeApproved" xml:space="preserve"><value>تمت الموافقة على حسابك! يمكنك الآن تسجيل الدخول والبدء في استخدام المنصة. أهلاً بك!</value></data>
 </root>

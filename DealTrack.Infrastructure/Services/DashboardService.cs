@@ -1,11 +1,12 @@
 using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Dashboard;
+using DealTrack.Application.DTOs.Landing;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Enums;
 using DealTrack.Infrastructure.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Data;
 
 namespace DealTrack.Infrastructure.Services
@@ -27,7 +28,7 @@ namespace DealTrack.Infrastructure.Services
             var tenantId = _currentUser.TenantId;
             var role     = _currentUser.Role;
 
-            await using var conn = new SqlConnection(_connStr);
+            await using var conn = new MySqlConnection(_connStr);
             await conn.OpenAsync(ct);
 
             DashboardSummaryDto summary;
@@ -44,14 +45,14 @@ namespace DealTrack.Infrastructure.Services
 
         // ── Sales SP ─────────────────────────────────────────────────────────
         private static async Task<DashboardSummaryDto> CallSalesSp(
-            SqlConnection conn, string userId, Guid tenantId, CancellationToken ct)
+            MySqlConnection conn, string userId, Guid tenantId, CancellationToken ct)
         {
-            await using var cmd = new SqlCommand("sp_GetSalesDashboard", conn)
+            await using var cmd = new MySqlCommand("sp_GetSalesDashboard", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
-            cmd.Parameters.AddWithValue("@UserId",   userId);
-            cmd.Parameters.AddWithValue("@TenantId", tenantId);
+            cmd.Parameters.AddWithValue("@p_UserId",   userId);
+            cmd.Parameters.AddWithValue("@p_TenantId", tenantId);
 
             await using var rdr = await cmd.ExecuteReaderAsync(ct);
 
@@ -76,14 +77,14 @@ namespace DealTrack.Infrastructure.Services
 
         // ── TeamLead SP ───────────────────────────────────────────────────────
         private static async Task<DashboardSummaryDto> CallTeamLeadSp(
-            SqlConnection conn, string userId, Guid tenantId, CancellationToken ct)
+            MySqlConnection conn, string userId, Guid tenantId, CancellationToken ct)
         {
-            await using var cmd = new SqlCommand("sp_GetTeamLeadDashboard", conn)
+            await using var cmd = new MySqlCommand("sp_GetTeamLeadDashboard", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
-            cmd.Parameters.AddWithValue("@UserId",   userId);
-            cmd.Parameters.AddWithValue("@TenantId", tenantId);
+            cmd.Parameters.AddWithValue("@p_UserId",   userId);
+            cmd.Parameters.AddWithValue("@p_TenantId", tenantId);
 
             await using var rdr = await cmd.ExecuteReaderAsync(ct);
 
@@ -105,13 +106,13 @@ namespace DealTrack.Infrastructure.Services
 
         // ── Admin SP ──────────────────────────────────────────────────────────
         private static async Task<DashboardSummaryDto> CallAdminSp(
-            SqlConnection conn, Guid tenantId, CancellationToken ct)
+            MySqlConnection conn, Guid tenantId, CancellationToken ct)
         {
-            await using var cmd = new SqlCommand("sp_GetAdminDashboard", conn)
+            await using var cmd = new MySqlCommand("sp_GetAdminDashboard", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
-            cmd.Parameters.AddWithValue("@TenantId", tenantId);
+            cmd.Parameters.AddWithValue("@p_TenantId", tenantId);
 
             await using var rdr = await cmd.ExecuteReaderAsync(ct);
 
@@ -132,25 +133,25 @@ namespace DealTrack.Infrastructure.Services
         }
 
         // ── Mapping helpers ───────────────────────────────────────────────────
-        private static int SafeInt(SqlDataReader r, string col)
+        private static int SafeInt(MySqlDataReader r, string col)
         {
             var i = r.GetOrdinal(col);
             return r.IsDBNull(i) ? 0 : r.GetInt32(i);
         }
 
-        private static decimal SafeDec(SqlDataReader r, string col)
+        private static decimal SafeDec(MySqlDataReader r, string col)
         {
             var i = r.GetOrdinal(col);
             return r.IsDBNull(i) ? 0m : r.GetDecimal(i);
         }
 
-        private static string SafeStr(SqlDataReader r, string col)
+        private static string SafeStr(MySqlDataReader r, string col)
         {
             var i = r.GetOrdinal(col);
             return r.IsDBNull(i) ? string.Empty : r.GetString(i);
         }
 
-        private static void FillScalars(DashboardSummaryDto dto, SqlDataReader r)
+        private static void FillScalars(DashboardSummaryDto dto, MySqlDataReader r)
         {
             dto.TotalClientsCount     = SafeInt(r, "TotalClients");
             dto.TodayFollowUpsCount   = SafeInt(r, "TodayFollowUps");
@@ -163,14 +164,14 @@ namespace DealTrack.Infrastructure.Services
             dto.FollowUpsMissed       = SafeInt(r, "FollowUpsMissed");
         }
 
-        private static void FillStatusBreakdown(DashboardSummaryDto dto, SqlDataReader r)
+        private static void FillStatusBreakdown(DashboardSummaryDto dto, MySqlDataReader r)
         {
             dto.PendingFollowUpsCount = SafeInt(r, "Pending");
             dto.FollowUpsDone         = SafeInt(r, "Done");
             dto.FollowUpsMissed       = SafeInt(r, "Missed");
         }
 
-        private static MonthlyRevenueDto ReadMonthlyRevenue(SqlDataReader r) => new()
+        private static MonthlyRevenueDto ReadMonthlyRevenue(MySqlDataReader r) => new()
         {
             Year      = SafeInt(r, "Year"),
             Month     = SafeInt(r, "Month"),
@@ -179,7 +180,7 @@ namespace DealTrack.Infrastructure.Services
             Count     = SafeInt(r, "Count"),
         };
 
-        private static TeamMemberStatDto ReadTeamMember(SqlDataReader r) => new()
+        private static TeamMemberStatDto ReadTeamMember(MySqlDataReader r) => new()
         {
             MemberName       = SafeStr(r, "MemberName"),
             RoleId           = SafeInt(r, "RoleId"),
@@ -189,5 +190,27 @@ namespace DealTrack.Infrastructure.Services
             FollowUpsPending = SafeInt(r, "FollowUpsPending"),
             FollowUpsOverdue = SafeInt(r, "FollowUpsOverdue"),
         };
+
+    public async Task<ApiResponseT<LandingStatsDto>> GetLandingStatsAsync(CancellationToken ct = default)
+    {
+        await using var conn = new MySqlConnection(_connStr);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand("CALL sp_GetLandingStats()", conn);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+
+        var dto = new LandingStatsDto();
+        if (await reader.ReadAsync(ct))
+        {
+            dto.ActiveClients       = SafeInt(reader,    "ActiveClients");
+            dto.TodaysTasks         = SafeInt(reader,    "TodaysTasks");
+            dto.CollectedThisMonth  = SafeDec(reader,    "CollectedThisMonth");
+            dto.CollectionRate      = reader.IsDBNull(reader.GetOrdinal("CollectionRate"))
+                                        ? 0
+                                        : Convert.ToDouble(reader["CollectionRate"]);
+        }
+
+        return ApiResponseT<LandingStatsDto>.SuccessResponse(dto);
     }
+}
 }

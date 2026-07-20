@@ -1,5 +1,6 @@
-﻿using DealTrack.Application.Common;
+using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.Notifications;
+using DealTrack.Application.Helpers;
 using DealTrack.Application.Interfaces;
 using DealTrack.Application.Resources;
 using DealTrack.Application.ServicesInterfaces;
@@ -7,7 +8,7 @@ using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.Extensions.Localization;
 using System.Net;
-using System.Threading;
+using System.Text.Json;
 
 namespace DealTrack.Application.Services
 {
@@ -34,20 +35,21 @@ namespace DealTrack.Application.Services
             await _realtimeService.SendNotificationAsync(userId.ToString(), new
             {
                 id = notification.Id,
-                title = notification.Title,
-                message = notification.Message,
+                title = LocalizeNotif(notification.Title),
+                message = LocalizeNotif(notification.Message),
+                link = ExtractLink(notification.Message),
                 type = notification.Type,
                 isRead = notification.IsRead,
                 createdAt = notification.CreatedAt
             }, ct);
         }
 
-        public async Task NotifyUpstreamAsync(string actorUserId, Guid tenantId, string actionDescription, CancellationToken ct = default)
+        public async Task NotifyUpstreamAsync(string actorUserId, Guid tenantId, string actionKey, string[] actionParams, string? link = null, CancellationToken ct = default)
         {
             var actor = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == actorUserId, ct);
             if (actor == null) return;
 
-            var actorName = string.IsNullOrWhiteSpace(actor.FullName) ? actor.UserName : actor.FullName;
+            var actorName = string.IsNullOrWhiteSpace(actor.FullName) ? actor.UserName ?? "" : actor.FullName;
 
             if (actor.Role == UserRole.Sales)
             {
@@ -57,34 +59,37 @@ namespace DealTrack.Application.Services
                     var teamLead = await _uow.Read<ApplicationUser>().GetSingleAsync(u => u.Id == tlId, ct);
                     if (teamLead != null)
                     {
-                        var tlName = string.IsNullOrWhiteSpace(teamLead.FullName) ? teamLead.UserName : teamLead.FullName;
-                        await CreateAsync(
-                            actor.TeamLeadId.Value,
-                            tenantId,
-                            "Team Member Activity",
-                            $"{actorName} (led by {tlName}) has {actionDescription}.",
+                        var tlName = string.IsNullOrWhiteSpace(teamLead.FullName) ? teamLead.UserName ?? "" : teamLead.FullName;
+                        var msgParams = new[] { actorName, tlName }.Concat(actionParams).ToArray();
+                        await CreateAsync(actor.TeamLeadId.Value, tenantId,
+                            NotifKey.Build("notif.title.teamActivity"),
+                            NotifKey.Build($"notif.msg.salesLed.{actionKey}", msgParams, link),
                             NotificationType.SystemNotification, ct);
                     }
                 }
                 else
                 {
-                    // Sales without a team lead → notify admins directly
                     var admins = await _uow.Read<ApplicationUser>()
                         .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Admin, ct);
+                    var msgParams = new[] { actorName }.Concat(actionParams).ToArray();
                     foreach (var admin in admins)
-                        await CreateAsync(Guid.Parse(admin.Id), tenantId, "Team Member Activity",
-                            $"{actorName} has {actionDescription}.", NotificationType.SystemNotification, ct);
+                        await CreateAsync(Guid.Parse(admin.Id), tenantId,
+                            NotifKey.Build("notif.title.teamActivity"),
+                            NotifKey.Build($"notif.msg.sales.{actionKey}", msgParams, link),
+                            NotificationType.SystemNotification, ct);
                 }
             }
             else if (actor.Role == UserRole.TeamLead)
             {
                 var admins = await _uow.Read<ApplicationUser>()
                     .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Admin, ct);
+                var msgParams = new[] { actorName }.Concat(actionParams).ToArray();
                 foreach (var admin in admins)
-                    await CreateAsync(Guid.Parse(admin.Id), tenantId, "Team Lead Activity",
-                        $"{actorName} (TeamLead) has {actionDescription}.", NotificationType.SystemNotification, ct);
+                    await CreateAsync(Guid.Parse(admin.Id), tenantId,
+                        NotifKey.Build("notif.title.tlActivity"),
+                        NotifKey.Build($"notif.msg.tl.{actionKey}", msgParams, link),
+                        NotificationType.SystemNotification, ct);
             }
-            // Admin role → no upstream to notify
         }
 
         public async Task<ApiResponseT<PagedResult<NotificationResponseDto>>> GetMyNotificationsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
@@ -102,8 +107,9 @@ namespace DealTrack.Application.Services
                 .Select(n => new NotificationResponseDto
                 {
                     Id = n.Id,
-                    Title = n.Title,
-                    Message = n.Message,
+                    Title = LocalizeNotif(n.Title),
+                    Message = LocalizeNotif(n.Message),
+                    Link = ExtractLink(n.Message),
                     Type = n.Type,
                     IsRead = n.IsRead,
                     CreatedAt = n.CreatedAt
@@ -145,6 +151,38 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
 
             return ApiResponse.SuccessResponse(message: _localizer["AllNotificationsMarkedRead"]);
+        }
+
+        private string LocalizeNotif(string raw)
+        {
+            if (string.IsNullOrEmpty(raw) || !raw.TrimStart().StartsWith("{")) return raw;
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                if (!doc.RootElement.TryGetProperty("k", out var kProp)) return raw;
+                var key = kProp.GetString() ?? "";
+                var template = _localizer[key].Value;
+                if (doc.RootElement.TryGetProperty("p", out var pProp))
+                {
+                    var args = pProp.EnumerateArray().Select(e => (object)(e.GetString() ?? "")).ToArray();
+                    return args.Length > 0 ? string.Format(template, args) : template;
+                }
+                return template;
+            }
+            catch { return raw; }
+        }
+
+        private static string? ExtractLink(string raw)
+        {
+            if (string.IsNullOrEmpty(raw) || !raw.TrimStart().StartsWith("{")) return null;
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                if (doc.RootElement.TryGetProperty("l", out var lProp))
+                    return lProp.GetString();
+            }
+            catch { /* ignore */ }
+            return null;
         }
     }
 }

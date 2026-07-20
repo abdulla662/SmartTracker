@@ -10,5 +10,6 @@ namespace DealTrack.Application.DTOs.Notifications
         public NotificationType Type { get; set; }
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? Link { get; set; }
     }
 }

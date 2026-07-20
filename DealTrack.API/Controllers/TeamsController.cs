@@ -23,7 +23,7 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<ApiResponseT<TeamsResponseDto>> GetAllTeams(CancellationToken ct)
             => await _teamService.GetAllTeamsAsync(ct);
 
@@ -60,17 +60,17 @@ namespace DealTrack.API.Controllers
 
         // Join Requests
         [HttpGet("join-requests")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,HR")]
         public async Task<ApiResponseT<List<JoinRequestDto>>> GetPendingJoinRequests(CancellationToken ct)
             => await _joinRequestService.GetPendingAsync(ct);
 
         [HttpPost("join-requests/{userId}/accept")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,HR")]
         public async Task<ApiResponse> AcceptJoinRequest(string userId, CancellationToken ct)
             => await _joinRequestService.AcceptAsync(userId, ct);
 
         [HttpPost("join-requests/{userId}/reject")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,HR")]
         public async Task<ApiResponse> RejectJoinRequest(string userId, CancellationToken ct)
             => await _joinRequestService.RejectAsync(userId, ct);
     }

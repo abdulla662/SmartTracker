@@ -39,7 +39,12 @@ namespace DealTrack.Application.Services
             if (user == null)
                 return ApiResponseT<GetProfileDto>.FailureResponse(_localizer["UserNotFound"]);
 
-            return ApiResponseT<GetProfileDto>.SuccessResponse(_mapper.Map<GetProfileDto>(user));
+            var tenant = await _uow.Read<Tenant>().GetSingleAsync(t => t.Id == user.TenantId, ct);
+            var dto = _mapper.Map<GetProfileDto>(user);
+            dto.IsIndividual = tenant?.IsPersonal ?? false;
+            dto.CompanyName = (tenant?.IsPersonal == true) ? string.Empty : (tenant?.Name ?? string.Empty);
+
+            return ApiResponseT<GetProfileDto>.SuccessResponse(dto);
         }
 
         public async Task<ApiResponseT<GetProfileDto>> UpdateProfileAsync(UpdateProfileDto dto, CancellationToken ct)
@@ -69,7 +74,13 @@ namespace DealTrack.Application.Services
 
             var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
             if (!result.Succeeded)
-                return ApiResponse.FailureResponse(result.Errors.First().Description);
+            {
+                var err = result.Errors.First();
+                var msg = err.Code == "PasswordMismatch"
+                    ? _localizer["IncorrectPassword"].ToString()
+                    : err.Description;
+                return ApiResponse.FailureResponse(msg);
+            }
 
             return ApiResponse.SuccessResponse(message: _localizer["PasswordChanged"]);
         }
@@ -132,11 +143,13 @@ namespace DealTrack.Application.Services
             var folder = Path.Combine(webRootPath, "uploads", "profiles");
             Directory.CreateDirectory(folder);
 
-            // Delete old image if it exists
+            // Delete old image if it exists — guard against path traversal
             if (!string.IsNullOrEmpty(user.ProfileImageUrl))
             {
-                var oldPath = Path.Combine(webRootPath, user.ProfileImageUrl.TrimStart('/'));
-                if (File.Exists(oldPath)) File.Delete(oldPath);
+                var oldPath = Path.GetFullPath(Path.Combine(webRootPath, user.ProfileImageUrl.TrimStart('/')));
+                var allowedDir = Path.GetFullPath(Path.Combine(webRootPath, "uploads", "profiles"));
+                if (oldPath.StartsWith(allowedDir) && File.Exists(oldPath))
+                    File.Delete(oldPath);
             }
 
             var fileName = $"{user.Id}{ext}";

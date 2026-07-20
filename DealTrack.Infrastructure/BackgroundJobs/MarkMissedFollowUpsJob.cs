@@ -1,4 +1,5 @@
-﻿using DealTrack.Application.Interfaces;
+﻿using DealTrack.Application.Helpers;
+using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
 using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
@@ -30,8 +31,8 @@ namespace DealTrack.Infrastructure.BackgroundJobs
                 await _notifications.CreateAsync(
                     followUp.CreatedByUserId,
                     followUp.TenantId,
-                    "Missed Follow-up",
-                    $"You missed a follow-up scheduled for {followUp.FollowUpDate:yyyy-MM-dd HH:mm}.",
+                    NotifKey.Build("notif.title.missedFollowUp"),
+                    NotifKey.Build("notif.msg.missedFollowUp", followUp.FollowUpDate.ToString("yyyy-MM-dd HH:mm")),
                     NotificationType.FollowUpReminder);
             }
 
