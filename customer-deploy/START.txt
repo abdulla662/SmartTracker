@@ -10,8 +10,12 @@ STEPS:
        - MYSQL_ROOT_PASSWORD  → choose any password
        - JWT_KEY              → copy from the key we sent you
        - GMAIL_*              → your company Gmail details
+       (REPO_USER and REPO_TOKEN are already filled by vendor)
 
-  2. Open a terminal in this folder and run:
+  2. Open a terminal in this folder and login once:
+       docker login ghcr.io -u abdulla662 -p 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
+
+  3. Run:
        docker compose up -d
 
   3. Wait 1 minute then open your browser:

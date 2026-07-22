@@ -30,8 +30,8 @@ $token = Get-Content $tokenFile -Raw | ForEach-Object { $_.Trim() }
 
 # ── Login to GitHub Container Registry ───────────────────────────────────────
 Write-Host "[1/4] Logging into $REGISTRY..." -ForegroundColor Yellow
-$token | docker login $REGISTRY -u $GITHUB_USER --password-stdin
-if ($LASTEXITCODE -ne 0) { Write-Host "Login failed." -ForegroundColor Red; exit 1 }
+docker login $REGISTRY -u $GITHUB_USER -p $token 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Host "Login failed. Check your token." -ForegroundColor Red; exit 1 }
 Write-Host "      Logged in OK" -ForegroundColor Green
 
 # ── Build backend ─────────────────────────────────────────────────────────────
