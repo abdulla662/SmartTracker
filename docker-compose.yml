@@ -91,6 +91,25 @@ services:
     depends_on:
       - backend
 
+  license-agent:
+    build:
+      context: ./license-agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/project
+    environment:
+      - LICENSE_KEY=${LICENSE_KEY}
+      - LICENSE_SERVER_URL=${LICENSE_SERVER_URL}
+      - PROJECT_DIR=/project
+      - COMPOSE_PROJECT=dealtrack
+      - APP_VERSION=1.0
+    labels:
+      - "com.docker.compose.project=dealtrack"
+    depends_on:
+      - backend
+
 volumes:
   mysql_data:
   rabbitmq_data:

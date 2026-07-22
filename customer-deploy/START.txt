@@ -1,0 +1,29 @@
+DealTrack CRM — Setup Guide
+============================
+
+REQUIREMENTS:
+  - Docker Desktop installed and running
+  - Internet connection (first run only, to download the app)
+
+STEPS:
+  1. Open the .env file and fill in your details:
+       - MYSQL_ROOT_PASSWORD  → choose any password
+       - JWT_KEY              → copy from the key we sent you
+       - GMAIL_*              → your company Gmail details
+
+  2. Open a terminal in this folder and run:
+       docker compose up -d
+
+  3. Wait 1 minute then open your browser:
+       http://localhost
+
+  4. Login with the admin credentials we sent you.
+
+TO STOP:
+  docker compose down
+
+TO UPDATE (when we release a new version):
+  docker compose pull
+  docker compose up -d
+
+SUPPORT: contact your vendor

@@ -202,6 +202,43 @@ using (var scope = app.Services.CreateScope())
     await DealTrack.Infrastructure.Persistence.SqlScriptRunner.RunStoredProceduresAsync(db);
 }
 
+// Seed SuperAdmin account
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<DealTrack.Domain.Entities.ApplicationUser>>();
+    var uow = scope.ServiceProvider.GetRequiredService<DealTrack.Application.Interfaces.IUnitOfWork>();
+
+    const string superAdminEmail = "superadmin@dealtrack.com";
+    const string superAdminPassword = "SuperAdmin@2024!";
+
+    if (await userManager.FindByEmailAsync(superAdminEmail) == null)
+    {
+        // Ensure a system tenant exists for the SuperAdmin user (FK requires a real tenant row)
+        var systemTenantName = "__DealTrack_System__";
+        var systemTenant = await uow.Read<DealTrack.Domain.Entities.Tenant>()
+            .GetSingleAsync(t => t.Name == systemTenantName);
+
+        if (systemTenant == null)
+        {
+            systemTenant = new DealTrack.Domain.Entities.Tenant(systemTenantName, DealTrack.Domain.Enums.SubscriptionPlan.Free);
+            await uow.Write<DealTrack.Domain.Entities.Tenant>().AddAsync(systemTenant);
+            await uow.SaveChangesAsync();
+        }
+
+        var superAdmin = new DealTrack.Domain.Entities.ApplicationUser
+        {
+            FullName        = "Super Admin",
+            Email           = superAdminEmail,
+            UserName        = superAdminEmail,
+            Role            = DealTrack.Domain.Enums.UserRole.SuperAdmin,
+            TenantId        = systemTenant.Id,
+            IsApproved      = true,
+            HasBeenWelcomed = true,
+        };
+        await userManager.CreateAsync(superAdmin, superAdminPassword);
+    }
+}
+
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications").RequireCors("FrontendDev");
 app.MapHub<ChatHub>("/hubs/chat").RequireCors("FrontendDev");

@@ -41,29 +41,27 @@ namespace DealTrack.Application.Services
                 .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.Sales && u.IsApproved, ct);
 
             // لكل TeamLead جيب الـ Sales تبعيه
+            var now = DateTimeOffset.UtcNow;
+            TeamMemberDto ToDto(ApplicationUser u) => new TeamMemberDto
+            {
+                Id = u.Id, FullName = u.FullName, Email = u.Email ?? "",
+                IsBlocked = u.LockoutEnabled && u.LockoutEnd.HasValue && u.LockoutEnd > now,
+            };
+
             var teamLeadDtos = teamLeads.Select(tl => new TeamLeadWithMembersDto
             {
                 Id = tl.Id,
                 FullName = tl.FullName,
                 Email = tl.Email ?? string.Empty,
+                IsBlocked = tl.LockoutEnabled && tl.LockoutEnd.HasValue && tl.LockoutEnd > now,
                 SalesMembers = allSales
                     .Where(s => s.TeamLeadId == Guid.Parse(tl.Id))
-                    .Select(s => new TeamMemberDto
-                    {
-                        Id = s.Id,
-                        FullName = s.FullName,
-                        Email = s.Email ?? string.Empty
-                    }).ToList()
+                    .Select(ToDto).ToList()
             }).ToList();
 
             var individualSales = allSales
                 .Where(s => s.TeamLeadId == null)
-                .Select(s => new TeamMemberDto
-                {
-                    Id = s.Id,
-                    FullName = s.FullName,
-                    Email = s.Email ?? string.Empty
-                }).ToList();
+                .Select(ToDto).ToList();
 
             var hrUsers = await _uow.Read<ApplicationUser>()
                 .ListAsync(u => u.TenantId == tenantId && u.Role == UserRole.HR && u.IsApproved, ct);
@@ -76,9 +74,9 @@ namespace DealTrack.Application.Services
             {
                 TeamLeads = teamLeadDtos,
                 IndividualSales = individualSales,
-                HrMembers = hrUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
-                Accountants = accountantUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
-                Admins = adminUsers.Select(u => new TeamMemberDto { Id = u.Id, FullName = u.FullName, Email = u.Email ?? "" }).ToList(),
+                HrMembers = hrUsers.Select(ToDto).ToList(),
+                Accountants = accountantUsers.Select(ToDto).ToList(),
+                Admins = adminUsers.Select(ToDto).ToList(),
             };
 
             return ApiResponseT<TeamsResponseDto>.SuccessResponse(result);

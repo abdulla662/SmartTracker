@@ -230,4 +230,8 @@
     <data name="notif.msg.hrActionExecuted" xml:space="preserve"><value>تم تطبيق إجراء تنظيمي على حسابك: {0}.</value></data>
     <data name="notif.title.welcomeApproved" xml:space="preserve"><value>أهلاً بك في الفريق! 🎉</value></data>
     <data name="notif.msg.welcomeApproved" xml:space="preserve"><value>تمت الموافقة على حسابك! يمكنك الآن تسجيل الدخول والبدء في استخدام المنصة. أهلاً بك!</value></data>
+    <data name="AccountSuspended" xml:space="preserve"><value>تم تعليق هذه المؤسسة. يرجى التواصل مع الدعم.</value></data>
+    <data name="TenantDeleted" xml:space="preserve"><value>تم حذف المؤسسة وجميع مستخدميها بنجاح.</value></data>
+    <data name="TenantBlocked" xml:space="preserve"><value>تم حظر المؤسسة بنجاح.</value></data>
+    <data name="TenantUnblocked" xml:space="preserve"><value>تم رفع الحظر عن المؤسسة بنجاح.</value></data>
 </root>

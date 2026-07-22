@@ -235,4 +235,8 @@
     <data name="notif.msg.hrActionExecuted" xml:space="preserve"><value>An organizational action was applied to your account: {0}.</value></data>
     <data name="notif.title.welcomeApproved" xml:space="preserve"><value>Welcome aboard! 🎉</value></data>
     <data name="notif.msg.welcomeApproved" xml:space="preserve"><value>Your account has been approved! You can now log in and start using the platform. Welcome to the team!</value></data>
+    <data name="AccountSuspended" xml:space="preserve"><value>This organization has been suspended. Please contact support.</value></data>
+    <data name="TenantDeleted" xml:space="preserve"><value>Organization and all users deleted successfully.</value></data>
+    <data name="TenantBlocked" xml:space="preserve"><value>Organization blocked successfully.</value></data>
+    <data name="TenantUnblocked" xml:space="preserve"><value>Organization unblocked successfully.</value></data>
 </root>

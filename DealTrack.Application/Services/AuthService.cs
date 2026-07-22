@@ -303,8 +303,24 @@ namespace DealTrack.Application.Services
             if (!isPasswordValid)
                 return ApiResponseT<AuthResponseDto>.FailureResponse(_localizer["InvalidCredentials"]);
 
-            if (!user.IsApproved && user.Role!=UserRole.Admin)
+            // Individual user lock (set by SuperAdmin or Admin) takes precedence over all other checks
+            if (user.LockoutEnabled && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                return ApiResponseT<AuthResponseDto>.FailureResponse(_localizer["AccountSuspended"], HttpStatusCode.Forbidden);
+
+            if (!user.IsApproved && user.Role != UserRole.Admin && user.Role != UserRole.SuperAdmin)
                 return ApiResponseT<AuthResponseDto>.FailureResponse(_localizer["AccountPendingApproval"], HttpStatusCode.Forbidden);
+
+            if (user.Role != UserRole.SuperAdmin)
+            {
+                var tenant = await _uow.Read<Tenant>().GetSingleAsync(t => t.Id == user.TenantId, default);
+                if (tenant != null && tenant.IsBlocked)
+                {
+                    var stillBlocked = tenant.BlockedUntil == null || tenant.BlockedUntil > DateTime.UtcNow;
+                    if (stillBlocked)
+                        return ApiResponseT<AuthResponseDto>.FailureResponse(
+                            _localizer["AccountSuspended"], HttpStatusCode.Forbidden);
+                }
+            }
 
             var accessToken = GenerateJwtToken(user);
 

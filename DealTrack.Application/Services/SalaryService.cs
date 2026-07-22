@@ -141,7 +141,9 @@ namespace DealTrack.Application.Services
                 return ApiResponseT<List<SalaryMemberDto>>.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
 
             var members = await _uow.Read<ApplicationUser>().ListAsync(
-                u => u.TenantId == tenantId && (u.Role == UserRole.TeamLead || u.Role == UserRole.Sales), ct);
+                u => u.TenantId == tenantId && u.IsApproved &&
+                     (u.Role == UserRole.TeamLead || u.Role == UserRole.Sales ||
+                      u.Role == UserRole.HR || u.Role == UserRole.Accountant), ct);
 
             var currentSalaries = await _uow.Read<MonthlySalary>().ListAsync(
                 s => s.TenantId == tenantId && s.Month == month && s.Year == year, ct);

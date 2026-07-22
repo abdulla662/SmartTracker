@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: DealTrackDb
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/abdulla662/dealtrack-backend:latest
+    ports:
+      - "7071:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=DealTrackDb;User=root;Password=${MYSQL_ROOT_PASSWORD};
+      - RabbitMQ__Host=rabbitmq
+      - JwtSettings__Key=${JWT_KEY}
+      - JwtSettings__Issuer=MyApi
+      - JwtSettings__Audience=MyApiUsers
+      - JwtSettings__ExpireMinutes=60
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Gmail__Host=smtp.gmail.com
+      - Gmail__Port=587
+      - Gmail__Username=${GMAIL_USERNAME}
+      - Gmail__AppPassword=${GMAIL_APP_PASSWORD}
+      - Gmail__FromEmail=${GMAIL_FROM_EMAIL}
+      - Gmail__FromName=DealTrack
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/abdulla662/dealtrack-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  rabbitmq_data:

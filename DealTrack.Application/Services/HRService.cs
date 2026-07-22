@@ -41,6 +41,10 @@ namespace DealTrack.Application.Services
                     u => u.Id == dto.TargetUserId && u.TenantId == _currentUser.TenantId, ct);
                 if (targetUser == null)
                     return ApiResponse.FailureResponse(_localizer["UserNotFound"], HttpStatusCode.NotFound);
+
+                // HR may not submit actions against Admin or other HR users
+                if (targetUser.Role == UserRole.Admin || targetUser.Role == UserRole.HR)
+                    return ApiResponse.FailureResponse(_localizer["Unauthorized"], HttpStatusCode.Forbidden);
             }
 
             if (dto.ActionType == HRActionType.AssignToTeamLead && string.IsNullOrEmpty(dto.TargetTeamLeadId))

@@ -1,8 +1,12 @@
 ﻿using DealTrack.Application.Common;
 using DealTrack.Application.DTOs.JoinRequest;
 using DealTrack.Application.DTOs.Team;
+using DealTrack.Application.Interfaces;
 using DealTrack.Application.ServicesInterfaces;
+using DealTrack.Domain.Entities;
+using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -15,11 +19,16 @@ namespace DealTrack.API.Controllers
     {
         private readonly ITeamService _teamService;
         private readonly IJoinRequestService _joinRequestService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ICurrentUserService _currentUser;
 
-        public TeamsController(ITeamService teamService, IJoinRequestService joinRequestService)
+        public TeamsController(ITeamService teamService, IJoinRequestService joinRequestService,
+            UserManager<ApplicationUser> userManager, ICurrentUserService currentUser)
         {
             _teamService = teamService;
             _joinRequestService = joinRequestService;
+            _userManager = userManager;
+            _currentUser = currentUser;
         }
 
         [HttpGet]
@@ -73,5 +82,37 @@ namespace DealTrack.API.Controllers
         [Authorize(Roles = "Admin,HR")]
         public async Task<ApiResponse> RejectJoinRequest(string userId, CancellationToken ct)
             => await _joinRequestService.RejectAsync(userId, ct);
+
+        // ── Block a member (Admin only) ──────────────────────────────────────
+        [HttpPost("members/{userId}/block")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ApiResponse> BlockMember(string userId, CancellationToken ct)
+        {
+            var tenantId = _currentUser.TenantId;
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.TenantId != tenantId || user.Role == UserRole.Admin || user.Role == UserRole.SuperAdmin)
+                return ApiResponse.FailureResponse("User not found or not allowed.", System.Net.HttpStatusCode.NotFound);
+
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.MaxValue;
+            await _userManager.UpdateAsync(user);
+            return ApiResponse.SuccessResponse(message: "Member blocked.");
+        }
+
+        // ── Unblock a member (Admin only) ────────────────────────────────────
+        [HttpPost("members/{userId}/unblock")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ApiResponse> UnblockMember(string userId, CancellationToken ct)
+        {
+            var tenantId = _currentUser.TenantId;
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null || user.TenantId != tenantId || user.Role == UserRole.Admin || user.Role == UserRole.SuperAdmin)
+                return ApiResponse.FailureResponse("User not found or not allowed.", System.Net.HttpStatusCode.NotFound);
+
+            user.LockoutEnabled = false;
+            user.LockoutEnd = null;
+            await _userManager.UpdateAsync(user);
+            return ApiResponse.SuccessResponse(message: "Member unblocked.");
+        }
     }
 }

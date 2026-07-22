@@ -6,6 +6,7 @@
         TeamLead = 2,
         Sales = 3,
         Accountant = 4,
-        HR = 5
+        HR = 5,
+        SuperAdmin = 6
     }
 }

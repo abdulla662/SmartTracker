@@ -32,6 +32,26 @@ namespace DealTrack.Domain.Entities
             MarkUpdated();
         }
 
+        public bool IsBlocked { get; private set; }
+        public DateTime? BlockedUntil { get; private set; }
+        public string? BlockReason { get; private set; }
+
+        public void Block(DateTime? until, string? reason)
+        {
+            IsBlocked = true;
+            BlockedUntil = until;
+            BlockReason = reason;
+            MarkUpdated();
+        }
+
+        public void Unblock()
+        {
+            IsBlocked = false;
+            BlockedUntil = null;
+            BlockReason = null;
+            MarkUpdated();
+        }
+
         public void UpdateInfo(string name, string? industry, string? address, string? website, string? currency, string? timezone)
         {
             Name = name;
