@@ -6,6 +6,7 @@ using DealTrack.Domain.Entities;
 using DealTrack.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -125,15 +126,23 @@ namespace DealTrack.Infrastructure.Services
             if (user is null)
                 return ApiResponse.FailureResponse("User not found.");
 
-            user.SubscriptionPlan = planInfo.Plan;
-            await _userManager.UpdateAsync(user);
+            var expiresAt = DateTime.UtcNow.AddMonths(1);
 
-            // Also upgrade the tenant so all members see the new plan
+            // Upgrade the tenant plan + expiry
             var tenant = await _uow.Read<Tenant>().GetSingleAsync(t => t.Id == user.TenantId, ct);
             if (tenant is not null)
             {
-                tenant.UpdatePlan(planInfo.Plan);
+                tenant.UpdatePlan(planInfo.Plan, expiresAt);
                 await _uow.Write<Tenant>().UpdateAsync(tenant, ct);
+
+                // Sync every user in the tenant to the new plan
+                var tenantUsers = await _userManager.Users
+                    .Where(u => u.TenantId == tenant.Id)
+                    .ToListAsync(ct);
+
+                foreach (var u in tenantUsers)
+                    u.SubscriptionPlan = planInfo.Plan;
+
                 await _uow.SaveChangesAsync();
             }
 

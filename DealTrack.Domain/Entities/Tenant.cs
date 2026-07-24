@@ -26,9 +26,12 @@ namespace DealTrack.Domain.Entities
             IsPersonal = isPersonal;
         }
 
-        public void UpdatePlan(SubscriptionPlan plan)
+        public DateTime? PlanExpiresAt { get; private set; }
+
+        public void UpdatePlan(SubscriptionPlan plan, DateTime? expiresAt = null)
         {
             Plan = plan;
+            PlanExpiresAt = expiresAt;
             MarkUpdated();
         }
 

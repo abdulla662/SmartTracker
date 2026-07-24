@@ -22,5 +22,9 @@ namespace DealTrack.API.Controllers
         public async Task<ApiResponseT<PagedResult<ActivityLogResponseDto>>> GetLogs(
             [FromQuery] ActivityLogFilterDto filter, CancellationToken ct)
             => await _activityLogQueryService.GetLogsAsync(filter, ct);
+
+        [HttpGet("users")]
+        public async Task<ApiResponseT<List<ActivityLogUserDto>>> GetVisibleUsers(CancellationToken ct)
+            => await _activityLogQueryService.GetVisibleUsersAsync(ct);
     }
 }

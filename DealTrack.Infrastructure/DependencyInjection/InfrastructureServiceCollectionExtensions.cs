@@ -112,6 +112,7 @@ namespace DealTrack.Infrastructure.DependencyInjection
 
             services.AddScoped<IOcrService, OcrService>();
             services.AddScoped<ITenantService, TenantService>();
+            services.AddHostedService<SubscriptionExpiryJob>();
 
             return services;
         }

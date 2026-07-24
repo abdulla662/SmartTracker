@@ -18,6 +18,41 @@ namespace DealTrack.Application.Services
             _currentUser = currentUser;
         }
 
+        public async Task<ApiResponseT<List<ActivityLogUserDto>>> GetVisibleUsersAsync(CancellationToken ct)
+        {
+            var userId = _currentUser.UserId;
+            var userGuid = Guid.Parse(userId);
+            var role = _currentUser.Role;
+
+            List<ApplicationUser> users;
+
+            if (role == UserRole.Admin)
+            {
+                users = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.TenantId == _currentUser.TenantId, ct);
+            }
+            else if (role == UserRole.TeamLead)
+            {
+                var members = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.TeamLeadId == userGuid, ct);
+                var self = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.Id == userId, ct);
+                users = members.Concat(self).ToList();
+            }
+            else
+            {
+                users = await _uow.Read<ApplicationUser>()
+                    .ListAsync(u => u.Id == userId, ct);
+            }
+
+            var result = users
+                .Select(u => new ActivityLogUserDto { Id = u.Id, FullName = u.FullName })
+                .OrderBy(u => u.FullName)
+                .ToList();
+
+            return ApiResponseT<List<ActivityLogUserDto>>.SuccessResponse(result);
+        }
+
         public async Task<ApiResponseT<PagedResult<ActivityLogResponseDto>>> GetLogsAsync(ActivityLogFilterDto filter, CancellationToken ct)
         {
             var userId = _currentUser.UserId;
@@ -43,10 +78,22 @@ namespace DealTrack.Application.Services
                 visibleUserIds = new List<Guid> { userGuid };
             }
 
+            // If a specific userId filter is requested, narrow visibleUserIds to just that user
+            // (only if they are already in the visible set — prevents cross-tenant access)
+            if (!string.IsNullOrEmpty(filter.UserId) && Guid.TryParse(filter.UserId, out var filterGuid))
+            {
+                if (visibleUserIds.Contains(filterGuid))
+                    visibleUserIds = new List<Guid> { filterGuid };
+                else
+                    return ApiResponseT<PagedResult<ActivityLogResponseDto>>.SuccessResponse(
+                        new PagedResult<ActivityLogResponseDto> { Items = new(), TotalCount = 0, Page = filter.Page, PageSize = filter.PageSize });
+            }
+
             var all = await _uow.Read<ActivityLog>().ListAsync(l =>
                 visibleUserIds.Contains(l.UserId) &&
                 (filter.EntityType == null || l.EntityType == filter.EntityType) &&
                 (filter.Action == null || l.Action == filter.Action) &&
+                (filter.Search == null || l.Action.Contains(filter.Search) || l.EntityType.Contains(filter.Search)) &&
                 (filter.From == null || l.CreatedAt >= filter.From) &&
                 (filter.To == null || l.CreatedAt <= filter.To), ct);
 
