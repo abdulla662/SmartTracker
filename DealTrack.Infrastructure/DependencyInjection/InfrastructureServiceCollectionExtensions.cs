@@ -80,6 +80,19 @@ namespace DealTrack.Infrastructure.DependencyInjection
                         if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
                             context.Token = accessToken;
                         return Task.CompletedTask;
+                    },
+                    // Reject tokens for locked accounts immediately — makes revoke instant
+                    OnTokenValidated = async context =>
+                    {
+                        var userManager = context.HttpContext.RequestServices
+                            .GetRequiredService<UserManager<ApplicationUser>>();
+                        var userId = context.Principal?
+                            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        if (userId is null) { context.Fail("Invalid token."); return; }
+
+                        var user = await userManager.FindByIdAsync(userId);
+                        if (user is null || (user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow))
+                            context.Fail("Account is locked or does not exist.");
                     }
                 };
             });

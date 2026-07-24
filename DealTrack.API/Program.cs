@@ -159,6 +159,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Load maintenance state from DB on startup
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
+await DealTrack.API.Maintenance.MaintenanceState.InitAsync(connStr);
+
 // Pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -177,11 +181,15 @@ app.UseRequestLocalization(options =>
 
 app.UseHttpsRedirection();
 app.UseCors("FrontendDev");
+app.UseMiddleware<DealTrack.API.Maintenance.MaintenanceMiddleware>();
 app.UseStaticFiles();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Lightweight health check — frontend polls this every 60s to detect maintenance
+app.MapGet("/api/ping", () => Results.Ok(new { ok = true })).AllowAnonymous();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
