@@ -68,7 +68,7 @@ namespace DealTrack.Application.Services
             if (isIndividual)
             {
                 var personalTenantName = $"{request.FullName.Trim()}'s Workspace";
-                var personalTenant = new Tenant(personalTenantName, SubscriptionPlan.Free, isPersonal: true);
+                var personalTenant = new Tenant(personalTenantName, SubscriptionPlan.Advanced, isPersonal: true);
                 await _uow.Write<Tenant>().AddAsync(personalTenant);
 
                 var individualUser = new ApplicationUser
@@ -77,7 +77,7 @@ namespace DealTrack.Application.Services
                     Email = request.Email,
                     UserName = request.Email,
                     Role = requestedRole,
-                    SubscriptionPlan = SubscriptionPlan.Free,
+                    SubscriptionPlan = SubscriptionPlan.Advanced,
                     TenantId = personalTenant.Id,
                     IsApproved = true
                 };

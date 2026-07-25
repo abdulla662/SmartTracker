@@ -151,7 +151,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5174",
                 "http://localhost",
                 "http://localhost:80",
-                "https://wilt-asleep-peroxide.ngrok-free.dev")
+                "https://wilt-asleep-peroxide.ngrok-free.dev",
+                "PASTE_FRONTEND_NGROK_URL_HERE")
               .WithHeaders("Authorization", "Content-Type", "Accept-Language", "Accept", "X-Requested-With")
               .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
               .AllowCredentials());

@@ -35,12 +35,19 @@ services:
       - JwtSettings__ExpireMinutes=60
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Production
+      - AppSettings__FrontendUrl=${PUBLIC_URL}
       - Gmail__Host=smtp.gmail.com
       - Gmail__Port=587
       - Gmail__Username=${GMAIL_USERNAME}
       - Gmail__AppPassword=${GMAIL_APP_PASSWORD}
       - Gmail__FromEmail=${GMAIL_FROM_EMAIL}
       - Gmail__FromName=DealTrack
+      - Paymob__ApiKey=${PAYMOB_API_KEY}
+      - Paymob__IntegrationId=${PAYMOB_INTEGRATION_ID}
+      - Paymob__IframeId=${PAYMOB_IFRAME_ID}
+      - Paymob__HmacSecret=${PAYMOB_HMAC_SECRET}
+      - OcrService__Enabled=false
+      - KillSwitch__Code=${KILLSWITCH_CODE}
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,15 +61,24 @@ services:
     depends_on:
       - backend
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: ["http", "frontend:80", "--log=stdout", "--domain=${NGROK_DOMAIN}"]
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - frontend
+
   watchtower:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/.docker/config.json:/config.json
     environment:
       - WATCHTOWER_POLL_INTERVAL=300
       - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
     restart: unless-stopped
 
 volumes:
