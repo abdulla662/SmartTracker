@@ -134,7 +134,8 @@ DealTrack/
 # 1. Login to registry (one-time)
 docker login ghcr.io -u abdulla662 -p <token>
 
-# 2. Copy customer-deploy/ folder, fill in .env, then:
+# 2. Copy customer-deploy/ folder, fill in credentials, then:
+cp .env.example .env   # then edit .env with your values
 docker compose up -d
 
 # 3. Open browser
