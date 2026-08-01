@@ -27,7 +27,7 @@ A production-ready CRM system built for sales teams and collection companies in 
 |---------|------|
 | ![Clients](docs/screenshots/clients.png) | ![Chat](docs/screenshots/chat.png) |
 
-> **Live demo:** [https://your-ngrok-domain.ngrok-free.app](https://your-ngrok-domain.ngrok-free.app)
+> **Live demo:** [https://wilt-asleep-peroxide.ngrok-free.dev](https://wilt-asleep-peroxide.ngrok-free.dev)
 
 ---
 
