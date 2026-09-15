@@ -60,7 +60,7 @@ namespace DealTrack.API.Controllers
             => await _clientService.ReassignClientAsync(id, dto, ct);
 
         [HttpGet("export")]
-        [Authorize(Policy = "AdvancedOrHigher")]
+        [Authorize]
         public async Task<IActionResult> ExportClients(CancellationToken ct)
         {
             var bytes = await _excelExportService.ExportClientsAsync(ct);
@@ -68,7 +68,7 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpPost("import")]
-        [Authorize(Policy = "AdvancedOrHigher")]
+        [Authorize]
         public async Task<ApiResponseT<ImportResultDto>> ImportClients(IFormFile file, CancellationToken ct)
         {
             var result = await _excelImportService.ImportClientsAsync(file, ct);
