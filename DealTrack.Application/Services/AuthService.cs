@@ -464,7 +464,8 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
 
             var resetLink = $"{_configuration["AppSettings:FrontendUrl"]}/reset-password?token={token.Token}";
-            await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink);
+            try { await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink); }
+            catch { /* email delivery failed — token still valid */ }
 
             return ApiResponse.SuccessResponse(message: _localizer["PasswordResetSent"]);
         }
