@@ -118,7 +118,8 @@ namespace DealTrack.Application.Services
             await _uow.Write<TenantInvite>().AddAsync(invite, ct);
             await _uow.SaveChangesAsync();
 
-            await _emailService.SendInviteEmailAsync(dto.Email, tenant!.Name, invite.InviteCode);
+            try { await _emailService.SendInviteEmailAsync(dto.Email, tenant!.Name, invite.InviteCode); }
+            catch { /* email delivery failed (e.g. quota) — invite still valid via code */ }
 
             return ApiResponseT<GetInviteDto>.SuccessResponse(
                 _mapper.Map<GetInviteDto>(invite),
@@ -198,7 +199,8 @@ namespace DealTrack.Application.Services
             await _uow.Write<TenantInvite>().AddAsync(invite, ct);
             await _uow.SaveChangesAsync();
 
-            await _emailService.SendInviteEmailAsync(email, tenant!.Name, invite.InviteCode);
+            try { await _emailService.SendInviteEmailAsync(email, tenant!.Name, invite.InviteCode); }
+            catch { /* email delivery failed — invite still valid via code */ }
 
             return ApiResponseT<GetInviteDto>.SuccessResponse(
                 _mapper.Map<GetInviteDto>(invite),
