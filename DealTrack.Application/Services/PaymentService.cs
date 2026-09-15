@@ -34,7 +34,19 @@ namespace DealTrack.Application.Services
         public async Task<ApiResponseT<PagedResult<PaymentResponseDto>>> GetAllPaymentsAsync(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             var tenantId = _currentUser.TenantId;
-            var payments = await _uow.Read<Payment>().ListAsync(p => p.TenantId == tenantId, ct);
+            var userId   = _currentUser.UserId;
+
+            List<Payment> payments;
+            if (_currentUser.Role == UserRole.Sales)
+            {
+                var myClients  = await _uow.Read<Client>().ListAsync(c => c.AssignedToUserId == userId && c.TenantId == tenantId, ct);
+                var myClientIds = myClients.Select(c => c.Id).ToHashSet();
+                payments = await _uow.Read<Payment>().ListAsync(p => p.TenantId == tenantId && myClientIds.Contains(p.ClientId), ct);
+            }
+            else
+            {
+                payments = await _uow.Read<Payment>().ListAsync(p => p.TenantId == tenantId, ct);
+            }
 
             var clientIds = payments.Select(p => p.ClientId).Distinct().ToList();
             var clients = new Dictionary<Guid, string>();
@@ -112,16 +124,24 @@ namespace DealTrack.Application.Services
         {
             var tenantId = _currentUser.TenantId;
 
+            var userId = _currentUser.UserId;
+
+            IList<Client> visibleClients;
+            if (_currentUser.Role == UserRole.Sales)
+                visibleClients = await _uow.Read<Client>().ListAsync(c => c.AssignedToUserId == userId && c.TenantId == tenantId, ct);
+            else
+                visibleClients = await _uow.Read<Client>().ListAsync(c => c.TenantId == tenantId, ct);
+
+            var visibleClientIds = visibleClients.Select(c => c.Id).ToHashSet();
+
             var summaries = await _uow.Read<ClientFinancialSummary>()
-                .ListAsync(s => s.TenantId == tenantId, ct);
+                .ListAsync(s => s.TenantId == tenantId && visibleClientIds.Contains(s.ClientId), ct);
 
             var clientIds = summaries.Select(s => s.ClientId).ToList();
-            var clients   = await _uow.Read<Client>()
-                .ListAsync(c => clientIds.Contains(c.Id), ct);
-            var clientMap = clients.ToDictionary(c => c.Id);
+            var clientMap = visibleClients.Where(c => clientIds.Contains(c.Id)).ToDictionary(c => c.Id);
 
             var payments  = await _uow.Read<Payment>()
-                .ListAsync(p => p.TenantId == tenantId, ct);
+                .ListAsync(p => p.TenantId == tenantId && visibleClientIds.Contains(p.ClientId), ct);
             var countMap  = payments.GroupBy(p => p.ClientId)
                 .ToDictionary(g => g.Key, g => g.Count());
             var lastMap   = payments.GroupBy(p => p.ClientId)

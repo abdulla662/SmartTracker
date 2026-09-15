@@ -110,9 +110,23 @@ namespace DealTrack.Application.Services
             // Plan limits check
             if (_currentUser.Role == UserRole.Admin)
             {
-                if (dto.TeamLeadId == null)
+                if (dto.InvitedRole == UserRole.TeamLead)
                 {
-                    // inviting a direct Sales
+                    var maxTeamLeads = PlanLimits.GetMaxTeamLeads(_currentUser.SubscriptionPlan);
+                    if (maxTeamLeads != int.MaxValue)
+                    {
+                        var teamLeadsCount = await _uow.Read<ApplicationUser>()
+                            .CountAsync(u => u.TenantId == _currentUser.TenantId
+                                && u.Role == UserRole.TeamLead, ct);
+
+                        if (teamLeadsCount >= maxTeamLeads)
+                            return ApiResponseT<GetInviteDto>.FailureResponse(
+                                _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
+                    }
+                }
+                else if (dto.TeamLeadId == null)
+                {
+                    // inviting a direct Sales (no team lead)
                     var maxDirectSales = PlanLimits.GetMaxDirectSales(_currentUser.SubscriptionPlan);
                     if (maxDirectSales != int.MaxValue)
                     {
@@ -122,21 +136,6 @@ namespace DealTrack.Application.Services
                                 && u.TeamLeadId == null, ct);
 
                         if (directSalesCount >= maxDirectSales)
-                            return ApiResponseT<GetInviteDto>.FailureResponse(
-                                _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
-                    }
-                }
-                else
-                {
-                    // inviting a TeamLead
-                    var maxTeamLeads = PlanLimits.GetMaxTeamLeads(_currentUser.SubscriptionPlan);
-                    if (maxTeamLeads != int.MaxValue)
-                    {
-                        var teamLeadsCount = await _uow.Read<ApplicationUser>()
-                            .CountAsync(u => u.TenantId == _currentUser.TenantId
-                                && u.Role == UserRole.TeamLead, ct);
-
-                        if (teamLeadsCount >= maxTeamLeads)
                             return ApiResponseT<GetInviteDto>.FailureResponse(
                                 _localizer["PlanLimitReached"], HttpStatusCode.Forbidden);
                     }
