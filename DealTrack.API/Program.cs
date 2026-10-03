@@ -152,6 +152,7 @@ builder.Services.AddCors(options =>
                 "http://localhost",
                 "http://localhost:80",
                 "https://wilt-asleep-peroxide.ngrok-free.dev",
+                "https://smarttracker.abdullahamdy.com",
                 "PASTE_FRONTEND_NGROK_URL_HERE")
               .WithHeaders("Authorization", "Content-Type", "Accept-Language", "Accept", "X-Requested-With")
               .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
