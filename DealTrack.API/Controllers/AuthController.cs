@@ -21,7 +21,7 @@ namespace DealTrack.API.Controllers
         }
 
         [HttpPost("register")]
-        [EnableRateLimiting("auth-sensitive")]
+        [EnableRateLimiting("register")]
         public async Task<ApiResponse> RegisterAsync(RegisterDto request)
             => await _authService.RegisterAsync(request);
 

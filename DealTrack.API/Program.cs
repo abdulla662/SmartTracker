@@ -98,7 +98,7 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
-    // Sensitive auth actions: 3 per 15 minutes per IP — register, OTP, forgot-password
+    // Sensitive auth actions: 3 per 15 minutes per IP — OTP, forgot-password (brute-force targets)
     options.AddPolicy("auth-sensitive", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -106,6 +106,18 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 3,
                 Window = TimeSpan.FromMinutes(15),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    // Registration: 10 per hour per IP — not a brute-force target; higher limit for usability
+    options.AddPolicy("register", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromHours(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
             }));

@@ -116,6 +116,7 @@
     <data name="JoinRequestsRetrieved" xml:space="preserve"><value>Join requests retrieved successfully.</value></data>
     <data name="CompanyNotFound" xml:space="preserve"><value>No company found with that name. Please check the spelling or leave the field blank to work independently.</value></data>
     <data name="CompanyHasNoAdmin" xml:space="preserve"><value>This company exists but has no admin yet. Please contact the company to get an invite instead.</value></data>
+    <data name="CompanyAlreadyExistsWithAdmin" xml:space="preserve"><value>A company with this name already exists and already has an Admin. Please use a different name or join as a team member instead.</value></data>
     <data name="NoPendingRequest" xml:space="preserve"><value>No pending join request found for this account.</value></data>
     <data name="JoinRequestCancelled" xml:space="preserve"><value>Your join request has been successfully withdrawn.</value></data>
     <data name="WithdrawalCodeSent" xml:space="preserve"><value>A 6-digit verification code has been sent to your email. It expires in 15 minutes.</value></data>

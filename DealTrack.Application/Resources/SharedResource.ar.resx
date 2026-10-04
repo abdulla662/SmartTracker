@@ -114,6 +114,7 @@
     <data name="JoinRequestsRetrieved" xml:space="preserve"><value>تم استرجاع طلبات الانضمام بنجاح.</value></data>
     <data name="CompanyNotFound" xml:space="preserve"><value>لا توجد شركة بهذا الاسم. تحقق من الإملاء أو اترك الحقل فارغاً للعمل باستقلالية.</value></data>
     <data name="CompanyHasNoAdmin" xml:space="preserve"><value>توجد شركة بهذا الاسم ولكن ليس لها مدير بعد. تواصل معهم للحصول على دعوة مباشرة.</value></data>
+    <data name="CompanyAlreadyExistsWithAdmin" xml:space="preserve"><value>يوجد بالفعل شركة بهذا الاسم ولديها مسؤول. يُرجى استخدام اسم مختلف أو الانضمام كعضو في الفريق.</value></data>
     <data name="NoPendingRequest" xml:space="preserve"><value>لا يوجد طلب انضمام معلق لهذا الحساب.</value></data>
     <data name="JoinRequestCancelled" xml:space="preserve"><value>تم سحب طلب انضمامك بنجاح.</value></data>
     <data name="WithdrawalCodeSent" xml:space="preserve"><value>تم إرسال رمز تحقق مكوّن من 6 أرقام إلى بريدك الإلكتروني. صالح لمدة 15 دقيقة.</value></data>

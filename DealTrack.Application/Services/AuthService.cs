@@ -105,7 +105,11 @@ namespace DealTrack.Application.Services
                 if (admin == null)
                     return ApiResponse.FailureResponse(_localizer["CompanyHasNoAdmin"]);
 
-                var joinRole = requestedRole == UserRole.Admin ? UserRole.Sales : requestedRole;
+                // Admin trying to register with a taken company name → block it
+                if (requestedRole == UserRole.Admin)
+                    return ApiResponse.FailureResponse(_localizer["CompanyAlreadyExistsWithAdmin"]);
+
+                var joinRole = requestedRole;
 
                 var pendingUser = new ApplicationUser
                 {
@@ -465,7 +469,7 @@ namespace DealTrack.Application.Services
 
             var resetLink = $"{_configuration["AppSettings:FrontendUrl"]}/reset-password?token={token.Token}";
             try { await _emailService.SendPasswordResetEmailAsync(user.Email!, resetLink); }
-            catch { /* email delivery failed — token still valid */ }
+            catch (Exception ex) { Console.WriteLine($"[EMAIL ERROR] {ex.GetType().Name}: {ex.Message}"); }
 
             return ApiResponse.SuccessResponse(message: _localizer["PasswordResetSent"]);
         }

@@ -273,6 +273,9 @@
   <data name="CompanyHasNoAdmin" xml:space="preserve">
     <value>Cette entreprise existe mais n'a pas encore d'administrateur. Contactez-les pour obtenir une invitation.</value>
   </data>
+  <data name="CompanyAlreadyExistsWithAdmin" xml:space="preserve">
+    <value>Une entreprise avec ce nom existe déjà et possède déjà un administrateur. Veuillez utiliser un autre nom ou rejoindre en tant que membre de l'équipe.</value>
+  </data>
   <data name="NoPendingRequest" xml:space="preserve">
     <value>Aucune demande d'adhésion en attente trouvée pour ce compte.</value>
   </data>
