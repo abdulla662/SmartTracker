@@ -119,7 +119,7 @@ namespace DealTrack.Application.Services
             await _uow.SaveChangesAsync();
 
             try { await _emailService.SendInviteEmailAsync(dto.Email, tenant!.Name, invite.InviteCode); }
-            catch { /* email delivery failed (e.g. quota) — invite still valid via code */ }
+            catch (Exception ex) { Console.WriteLine($"[EMAIL ERROR] {ex.GetType().Name}: {ex.Message}"); }
 
             return ApiResponseT<GetInviteDto>.SuccessResponse(
                 _mapper.Map<GetInviteDto>(invite),

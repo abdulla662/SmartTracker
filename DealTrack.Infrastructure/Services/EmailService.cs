@@ -1,26 +1,31 @@
 using DealTrack.Application.ServicesInterfaces;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
-using SendGrid;
-using SendGrid.Helpers.Mail;
+using Microsoft.Extensions.Logging;
+using MimeKit;
 
 namespace DealTrack.Infrastructure.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly string _apiKey;
+        private readonly string _host;
+        private readonly int _port;
         private readonly string _fromEmail;
         private readonly string _fromName;
+        private readonly string _password;
         private readonly string _frontendUrl;
+        private readonly ILogger<EmailService> _logger;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
         {
-            _apiKey      = configuration["SendGrid:ApiKey"]!;
-            _fromEmail   = configuration["SendGrid:FromEmail"]
-                        ?? configuration["Gmail:FromEmail"]!;
-            _fromName    = configuration["SendGrid:FromName"]
-                        ?? configuration["Gmail:FromName"]
-                        ?? "FollowUp CRM";
-            _frontendUrl = (configuration["FrontendUrl"] ?? "http://localhost").TrimEnd('/');
+            _logger      = logger;
+            _host        = configuration["Gmail:Host"] ?? "smtp.gmail.com";
+            _port        = int.Parse(configuration["Gmail:Port"] ?? "587");
+            _fromEmail   = configuration["Gmail:FromEmail"]!;
+            _fromName    = configuration["Gmail:FromName"] ?? "FollowUp CRM";
+            _password    = configuration["Gmail:AppPassword"]!;
+            _frontendUrl = (configuration["AppSettings:FrontendUrl"] ?? "http://localhost").TrimEnd('/');
         }
 
         public async Task SendInviteEmailAsync(string toEmail, string companyName, string inviteCode)
@@ -124,13 +129,21 @@ namespace DealTrack.Infrastructure.Services
 
         private async Task SendAsync(string toEmail, string subject, string html)
         {
-            var client = new SendGridClient(_apiKey);
-            var from   = new EmailAddress(_fromEmail, _fromName);
-            var to     = new EmailAddress(toEmail);
-            var msg    = MailHelper.CreateSingleEmail(from, to, subject, null, html);
-            var res    = await client.SendEmailAsync(msg);
-            if ((int)res.StatusCode >= 400)
-                throw new Exception($"SendGrid error {res.StatusCode}");
+            _logger.LogInformation("Gmail: sending to={To} subject={Subject}", toEmail, subject);
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_fromName, _fromEmail));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = html };
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_fromEmail, _password);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+
+            _logger.LogInformation("Gmail: sent successfully to={To}", toEmail);
         }
     }
 }
