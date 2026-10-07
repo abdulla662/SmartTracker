@@ -46,9 +46,12 @@ services:
       - Paymob__IntegrationId=${PAYMOB_INTEGRATION_ID}
       - Paymob__IframeId=${PAYMOB_IFRAME_ID}
       - Paymob__HmacSecret=${PAYMOB_HMAC_SECRET}
-      - SendGrid__ApiKey=${SENDGRID_API_KEY}
-      - SendGrid__FromEmail=${SENDGRID_FROM_EMAIL}
-      - SendGrid__FromName=FollowUp CRM
+      - Gmail__Host=smtp.gmail.com
+      - Gmail__Port=587
+      - Gmail__FromEmail=${GMAIL_FROM_EMAIL}
+      - Gmail__FromName=FollowUp CRM
+      - Gmail__AppPassword=${GMAIL_APP_PASSWORD}
+      - AppSettings__FrontendUrl=https://smarttracker.abdullahamdy.com
       - KillSwitch__Code=${KILLSWITCH_CODE}
     depends_on:
       mysql:
